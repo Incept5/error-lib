@@ -1,0 +1,24 @@
+{
+  "spec": "getting this build error: Could not resolve com.github.incept5:json-lib:1.0.6\ndespite the repo being declared in settings.gradle: \ndependencyResolutionManagement {\n    repositories {\n        mavenCentral()\n        maven { url = uri(\"https://jitpack.io\") }\n    }\n}\n\nAnd the artefact being in jitpack: https://jitpack.io/#incept5/json-lib",
+  "commitMessage": "Update JitPack dependency and CircleCI config for new version\n\n\n",
+  "stats": {
+    "inputTokens": 182894,
+    "cacheWriteTokens": 6865,
+    "cacheReadTokens": 164760,
+    "outputTokens": 3063,
+    "totalTokens": null,
+    "cost": 0.44597025,
+    "currency": "gbp",
+    "processingMillis": 169813,
+    "git": {
+      "filesChanged": 7,
+      "insertions": 13,
+      "deletions": 19,
+      "linesChanged": 19,
+      "testFilesChanged": 0,
+      "testInsertions": 0,
+      "testDeletions": 0,
+      "testLinesChanged": 0
+    }
+  }
+}

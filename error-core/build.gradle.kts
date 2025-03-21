@@ -9,7 +9,6 @@ plugins {
 
 dependencies {
 
-    // Direct JitPack dependency instead of using the version catalog
     implementation(libs.incept5.json)
 
     // jackson

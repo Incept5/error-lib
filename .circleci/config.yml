@@ -48,8 +48,8 @@ jobs:
             echo "Creating tag for version: ${VERSION}"
             git config user.email "ci@incept5.com"
             git config user.name "CircleCI"
-            git tag -a "v${VERSION}" -m "Release version ${VERSION}"
-            git push origin "v${VERSION}"
+            git tag -a "${VERSION}" -m "Release version ${VERSION}"
+            git push origin "${VERSION}"
       - run:
           name: Trigger JitPack Build
           command: |

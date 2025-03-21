@@ -14,12 +14,8 @@ pluginManagement {
 dependencyResolutionManagement {
     repositories {
         mavenCentral()
-        maven { 
-            url = uri("https://jitpack.io") 
-            content {
-                includeGroup("com.github.incept5")
-            }
-        }
+        maven { url = uri("https://jitpack.io") }
     }
 }
+
 

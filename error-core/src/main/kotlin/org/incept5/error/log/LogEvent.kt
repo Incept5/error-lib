@@ -1,4 +1,4 @@
-package com.velostone.telemetry.log
+package org.incept5.error.log
 
 /**
  * Represents a log event that can be logged as structured JSON

@@ -1,7 +1,6 @@
-package com.velostone.telemetry.log
+package org.incept5.error.log
 
-import com.velostone.json.Json
-
+import org.incept5.json.Json
 /**
  * Marker interface which tells our logger to format the object as structured text (usually JSON)
  *

@@ -1,8 +1,8 @@
 [versions]
 
 # Incep5 versions
-incept5-correlation = "1.0.14"
-incept5-json = "1.0.2"
+incept5-correlation = "1.0.18"
+incept5-json = "1.0.6"
 
 # plugin versions in alphabetical order
 jackson = "2.18.3"

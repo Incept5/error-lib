@@ -40,7 +40,7 @@ open class RestErrorHandler {
                 log.error("Unexpected exception encountered : {}", requestLog(req), exp)
             } else {
                 // all other exceptions are logged to WARN and the message and first 10 lines of the root cause appear in the logs
-                log.warn("Application exception encountered : {}", requestLog(req, exp))
+                log.warn("Application exception encountered : {}", arrayOf(requestLog(req, exp)))
             }
             val response =
                 CommonErrorResponse(
@@ -105,7 +105,7 @@ open class RestErrorHandler {
         req: HttpServerRequest,
         exp: ConstraintViolationException,
     ): Response {
-        log.warn("Constraint violation : ${requestLog(req)}")
+        log.warn("Constraint violation : {}", arrayOf(requestLog(req)))
         val errors =
             exp.constraintViolations.map {
                 CommonError(it.message, "VALIDATION", it.propertyPath.toString())
