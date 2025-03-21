@@ -1,0 +1,74 @@
+[versions]
+
+# Incep5 versions
+incept5-correlation = "1.0.14"
+incept5-json = "v1.0.2"
+
+# plugin versions in alphabetical order
+jackson = "2.18.3"
+jandex = "1.1.0"
+kotlin = "2.1.20"
+ktlint = "12.1.2"
+mockk = "1.13.17"
+mockito = "5.16.0"
+mockito-kotlin = "5.4.0"
+quarkus = "3.19.4"
+#test-logger = "4.0.0"
+versions = "0.11.1"
+dependency-analysis = "2.13.0"
+
+# test library versions
+kotest = "5.9.1"
+
+[plugins]
+
+# kotlin
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
+kotlin-allopen = { id = "org.jetbrains.kotlin.plugin.allopen", version.ref = "kotlin" }
+
+# kotlin linting
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
+# gradle versions plugin
+versions = { id = "com.github.ben-manes.versions", version.ref = "versions" }
+# test logging niceness
+#test-logger = { id = "com.adarshr.test-logger", version.ref = "test-logger"}
+
+# quarkus
+quarkus = { id = "io.quarkus", version.ref = "quarkus" }
+jandex = { id = "org.kordamp.gradle.jandex", version.ref = "jandex" }
+
+# dependency hygiene
+dependency-analysis = { id = "com.autonomousapps.dependency-analysis", version.ref = "dependency-analysis"}
+
+# Library definitions in alphabetical order
+[libraries]
+
+# Incept5 libraries
+
+# correlation
+incept5-correlation = { module = "com.github.incept5:correlation", version.ref = "incept5-correlation" }
+
+# json
+incept5-json = { group = "com.github", name = "incept5:json-lib", version = "v1.0.2" }
+
+
+# jackson bom
+jackson-bom = { module = "com.fasterxml.jackson:jackson-bom", version.ref = "jackson" }
+
+# mockito
+mockito-bom = { group = "org.mockito", name = "mockito-bom", version.ref = "mockito" }
+mockito-kotlin = { group = "org.mockito.kotlin", name = "mockito-kotlin", version.ref = "mockito-kotlin" }
+
+# mockk
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+mockk-dsl = { group = "io.mockk", name = "mockk-dsl", version.ref = "mockk" }
+
+# quarkus
+quarkus-bom = { group = "io.quarkus.platform", name = "quarkus-bom", version.ref = "quarkus" }
+
+# kotest
+kotest-bom = { module = "io.kotest:kotest-bom", version.ref = "kotest" }
+
+[bundles]
+

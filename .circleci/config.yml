@@ -1,0 +1,101 @@
+version: 2.1
+
+orbs:
+  gradle: circleci/gradle@3.0.0
+
+jobs:
+  build-and-test:
+    docker:
+      - image: cimg/openjdk:21.0
+    steps:
+      - checkout
+      - gradle/with_cache:
+          steps:
+            - run:
+                name: Build and Test
+                command: ./gradlew clean build
+      - store_test_results:
+          path: build/test-results
+      - store_artifacts:
+          path: build/reports
+          destination: reports
+
+  publish-to-jitpack:
+    docker:
+      - image: cimg/openjdk:21.0
+    steps:
+      - checkout
+      - run:
+          name: Set Build Number
+          command: |
+            # Use the CircleCI build number directly without additional processing
+            echo "export BUILD_NUMBER=${CIRCLE_BUILD_NUM}" >> $BASH_ENV
+            source $BASH_ENV
+            echo "Using build number: ${BUILD_NUMBER}"
+      - gradle/with_cache:
+          steps:
+            - run:
+                name: Build with Build Number
+                command: ./gradlew clean build -PbuildNumber=${BUILD_NUMBER}
+            - run:
+                name: Publish to Local Maven Repository
+                command: ./gradlew publishToMavenLocal -PbuildNumber=${BUILD_NUMBER}
+      - run:
+          name: Create and Push Git Tag
+          command: |
+            # Create a git tag with the version number
+            VERSION="1.0.${BUILD_NUMBER}"
+            echo "Creating tag for version: ${VERSION}"
+            git config user.email "ci@incept5.com"
+            git config user.name "CircleCI"
+            git tag -a "v${VERSION}" -m "Release version ${VERSION}"
+            git push origin "v${VERSION}"
+      - run:
+          name: Trigger JitPack Build
+          command: |
+            VERSION="1.0.${BUILD_NUMBER}"
+            
+            # Verify local artifacts
+            echo "Verifying local artifacts:"
+            find ~/.m2/repository -name "error-core*" | grep "com/github/incept5" | sort
+            find ~/.m2/repository -name "error-quarkus*" | grep "com/github/incept5" | sort
+            
+            # Trigger JitPack build by making a request to the JitPack URL with the version tag
+            echo "Triggering JitPack build for version ${VERSION}"
+            curl -s "https://jitpack.io/com/github/incept5/error-core/${VERSION}/error-core-${VERSION}.pom" || true
+            curl -s "https://jitpack.io/com/github/incept5/error-quarkus/${VERSION}/error-quarkus-${VERSION}.pom" || true
+
+            echo "JitPack build triggered for version ${VERSION}"
+            echo "Artifacts will be available at: https://jitpack.io/#com.github.incept5/error-core/${VERSION}"
+            echo "Artifacts will be available at: https://jitpack.io/#com.github.incept5/error-quarkus/${VERSION}"
+            
+            # Wait for JitPack to process the build (optional)
+            echo "Waiting for JitPack to process the build..."
+            sleep 60
+            
+            # Verify the build status for error-core
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://jitpack.io/com/github/incept5/error-core/${VERSION}/error-core-${VERSION}.pom")
+            if [ "$HTTP_STATUS" -eq 200 ]; then
+              echo "JitPack build successful!"
+            else
+              echo "JitPack build may still be in progress. Check status at: https://jitpack.io/com/github/incept5/error-cord/${VERSION}"
+            fi
+            # Verify the build status for error-quarkus
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://jitpack.io/com/github/incept5/error-quarkus/${VERSION}/error-quarkus-${VERSION}.pom")
+            if [ "$HTTP_STATUS" -eq 200 ]; then
+              echo "JitPack build successful!"
+            else
+              echo "JitPack build may still be in progress. Check status at: https://jitpack.io/com/github/incept5/error-quarkus/${VERSION}"
+            fi
+
+workflows:
+  version: 2
+  build-test-publish:
+    jobs:
+      - build-and-test
+      - publish-to-jitpack:
+          requires:
+            - build-and-test
+          filters:
+            branches:
+              only: main

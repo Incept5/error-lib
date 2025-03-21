@@ -1,0 +1,19 @@
+jdk:
+  - openjdk21
+before_install:
+  - ./gradlew clean
+install:
+  # Extract version from git tag (JitPack sets the version based on the git tag)
+  - if [ -n "$VERSION" ]; then
+      echo "Using provided version: $VERSION";
+    elif [ -n "$(git tag --points-at HEAD)" ]; then
+      VERSION=$(git describe --tags --abbrev=0 | sed 's/^v//');
+      echo "Using git tag version: $VERSION";
+    else
+      VERSION=$(git rev-parse --short HEAD);
+      echo "Using commit hash as version: $VERSION";
+    fi
+  - echo "Building version $VERSION"
+  - ./gradlew build publishToMavenLocal -Pgroup=com.github.incept5 -Pversion=$VERSION
+  - echo "Published artifacts to local Maven repository"
+  - find ~/.m2/repository -name "error-core*" | grep "com/github/incept5" | sort
