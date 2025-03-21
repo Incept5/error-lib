@@ -18,10 +18,10 @@ dependencies {
     implementation(project(":error-core"))
 
     runtimeOnly(project(":error-quarkus"))
-    runtimeOnly("io.quarkus:quarkus-resteasy-reactive-jackson")
+    implementation("io.quarkus:quarkus-resteasy-reactive-jackson")
+    implementation("io.quarkus:quarkus-resteasy-reactive")
     runtimeOnly("io.quarkus:quarkus-hibernate-validator")
     runtimeOnly("io.quarkus:quarkus-arc")
-    runtimeOnly("io.quarkus:quarkus-resteasy-reactive")
 
     testImplementation("io.quarkus:quarkus-test-common")
     testImplementation("io.quarkus:quarkus-junit5")

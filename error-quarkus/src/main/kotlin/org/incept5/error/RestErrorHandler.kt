@@ -3,6 +3,7 @@ package org.incept5.error
 import org.incept5.correlation.CorrelationId
 import org.incept5.error.response.CommonError
 import org.incept5.error.response.CommonErrorResponse
+import org.incept5.error.util.LogEvent
 import io.vertx.core.http.HttpServerRequest
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.validation.ConstraintViolationException
@@ -143,7 +144,7 @@ open class RestErrorHandler {
         req: HttpServerRequest,
         exp: Throwable,
     ): Response {
-        exp.addMetadata(ErrorCategory.UNEXPECTED, Error("suppressed.error"))
+        exp.addMetadata(ErrorCategory.UNEXPECTED, org.incept5.error.Error("suppressed.error"))
         return handleUnexpectedException(req, exp)
     }
 

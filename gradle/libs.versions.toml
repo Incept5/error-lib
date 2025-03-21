@@ -2,7 +2,7 @@
 
 # Incep5 versions
 incept5-correlation = "1.0.14"
-incept5-json = "v1.0.2"
+incept5-json = "1.0.2"
 
 # plugin versions in alphabetical order
 jackson = "2.18.3"
@@ -12,7 +12,7 @@ ktlint = "12.1.2"
 mockk = "1.13.17"
 mockito = "5.16.0"
 mockito-kotlin = "5.4.0"
-quarkus = "3.19.4"
+quarkus = "3.8.6"
 #test-logger = "4.0.0"
 versions = "0.11.1"
 dependency-analysis = "2.13.0"
@@ -48,9 +48,8 @@ dependency-analysis = { id = "com.autonomousapps.dependency-analysis", version.r
 
 # correlation
 incept5-correlation = { module = "com.github.incept5:correlation", version.ref = "incept5-correlation" }
-
 # json
-incept5-json = { group = "com.github", name = "incept5:json-lib", version = "v1.0.2" }
+incept5-json = { module = "com.github.incept5:json-lib", version.ref = "incept5-json" }
 
 
 # jackson bom

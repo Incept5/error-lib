@@ -10,7 +10,7 @@ plugins {
 dependencies {
 
     // Direct JitPack dependency instead of using the version catalog
-    implementation("com.github.incept5:json-lib:master-SNAPSHOT")
+    implementation(libs.incept5.json)
 
     // jackson
     api(platform(libs.jackson.bom))

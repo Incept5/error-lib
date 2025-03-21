@@ -14,15 +14,15 @@ dependencies {
 
     api(project(":error-core"))
     api("io.vertx:vertx-core")
-    api("io.quarkus.resteasy.reactive:resteasy-reactive")
+    api("io.quarkus:quarkus-resteasy-reactive")
     api("jakarta.enterprise:jakarta.enterprise.cdi-api")
     api("jakarta.validation:jakarta.validation-api")
     api("jakarta.ws.rs:jakarta.ws.rs-api")
 
     implementation(libs.incept5.correlation)
     implementation("io.quarkus:quarkus-kotlin")
-    runtimeOnly("io.quarkus.resteasy.reactive:resteasy-reactive-common")
-    runtimeOnly("io.quarkus:quarkus-resteasy-reactive")
+    implementation("io.quarkus:quarkus-resteasy-reactive-jackson")
+    runtimeOnly("io.quarkus:quarkus-arc")
 
     testImplementation(platform(libs.kotest.bom))
     testRuntimeOnly("io.kotest:kotest-runner-junit5")

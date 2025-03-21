@@ -1,0 +1,24 @@
+{
+  "spec": "Fix this build error:\nCould not determine the dependencies of task ':error-quarkus-sample:quarkusGenerateAppModel'.\n> Could not resolve all dependencies for configuration ':error-quarkus-sample:quarkusProdBaseRuntimeClasspathConfiguration'.\n   > Could not find io.quarkus:quarkus-resteasy-reactive-jackson:.\n     Required by:\n         project :error-quarkus-sample\n   > Could not find io.quarkus:quarkus-resteasy-reactive:.\n     Required by:\n         project :error-quarkus-sample\n         project :error-quarkus-sample > project :error-quarkus",
+  "commitMessage": "Refactor: Use `incept5-json` dependency and update version catalog\n\n\n",
+  "stats": {
+    "inputTokens": 358268,
+    "cacheWriteTokens": 6819,
+    "cacheReadTokens": 163656,
+    "outputTokens": 5354,
+    "totalTokens": null,
+    "cost": 0.8663355,
+    "currency": "gbp",
+    "processingMillis": 161937,
+    "git": {
+      "filesChanged": 8,
+      "insertions": 54,
+      "deletions": 11,
+      "linesChanged": 54,
+      "testFilesChanged": 0,
+      "testInsertions": 0,
+      "testDeletions": 0,
+      "testLinesChanged": 0
+    }
+  }
+}
