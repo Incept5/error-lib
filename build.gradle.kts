@@ -35,18 +35,18 @@ plugins {
 // Apply a specific Java toolchain to ease working on different environments.
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
+        languageVersion.set(JavaLanguageVersion.of(17))
     }
     withJavadocJar()
     withSourcesJar()
 }
 
-// Configure Kotlin to target JVM 21
+// Configure Kotlin to target JVM 17
 kotlin {
-    jvmToolchain(21)
+    jvmToolchain(17)
 
     compilerOptions {
-        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
 
 }
