@@ -1,7 +1,7 @@
 package org.incept5.error
 
-import org.incept5.error.sample.CreateMessageRequest
-import org.incept5.error.sample.MessageService
+import org.incept5.sample.CreateMessageRequest
+import org.incept5.sample.MessageService
 import io.quarkus.test.InjectMock
 import io.quarkus.test.junit.QuarkusTest
 import io.restassured.RestAssured.given

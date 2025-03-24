@@ -25,6 +25,13 @@ dependencies {
     testRuntimeOnly("io.kotest:kotest-runner-junit5")
 }
 
+tasks.test {
+    useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
+    }
+}
+
 publishing {
     publications {
         create<MavenPublication>("maven") {

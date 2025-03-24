@@ -1,4 +1,4 @@
-package org.incept5.error.sample
+package org.incept5.sample
 
 import jakarta.validation.constraints.NotBlank
 import java.net.URL

@@ -1,6 +1,6 @@
 package org.incept5.error
 
-import org.incept5.error.sample.CreateMessageRequest
+import org.incept5.sample.CreateMessageRequest
 import io.quarkus.test.junit.QuarkusTest
 import io.restassured.RestAssured.given
 import org.junit.jupiter.api.Assertions.*

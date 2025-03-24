@@ -1,4 +1,4 @@
-package org.incept5.error.sample
+package org.incept5.sample
 
 import org.incept5.error.CoreException
 import org.incept5.error.Error
