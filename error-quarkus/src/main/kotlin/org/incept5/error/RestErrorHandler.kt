@@ -3,8 +3,8 @@ package org.incept5.error
 import org.incept5.correlation.CorrelationId
 import org.incept5.error.response.CommonError
 import org.incept5.error.response.CommonErrorResponse
-import org.incept5.error.util.LogEvent
 import io.vertx.core.http.HttpServerRequest
+import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.validation.ConstraintViolationException
 import jakarta.ws.rs.*
@@ -23,6 +23,7 @@ open class RestErrorHandler {
 
     companion object {
         private val log = Logger.getLogger(RestErrorHandler::class.java)
+        private val objectMapper = ObjectMapper()
     }
 
     /**
@@ -40,7 +41,7 @@ open class RestErrorHandler {
                 log.error("Unexpected exception encountered : ${requestLog(req)}", exp)
             } else {
                 // all other exceptions are logged to WARN and the message and first 10 lines of the root cause appear in the logs
-                log.warn("Application exception encountered : ${arrayOf(requestLog(req, exp))}")
+                log.warn("Application exception encountered : ${requestLog(req, exp)}")
             }
             val response =
                 CommonErrorResponse(
@@ -105,7 +106,7 @@ open class RestErrorHandler {
         req: HttpServerRequest,
         exp: ConstraintViolationException,
     ): Response {
-        log.warn("Constraint violation : ${arrayOf(requestLog(req))}")
+        log.warn("Constraint violation : ${requestLog(req)}")
         val errors =
             exp.constraintViolations.map {
                 CommonError(it.message, "VALIDATION", it.propertyPath.toString())
@@ -210,32 +211,35 @@ open class RestErrorHandler {
         }
     }
 
-    private fun requestLog(req: HttpServerRequest) : LogEvent {
-        return LogEvent(
+    private fun requestLog(req: HttpServerRequest) : String {
+        val logMap = mapOf(
             "path" to req.path(),
             "method" to req.method(),
             "query" to req.query(),
-            "remoteAddress" to req.remoteAddress().hostAddress(),
+            "remoteAddress" to req.remoteAddress().hostAddress()
         )
+        return objectMapper.writeValueAsString(logMap)
     }
 
-    private fun requestLog(req: HttpServerRequest, exp: Throwable) : LogEvent {
-        return LogEvent(
+    private fun requestLog(req: HttpServerRequest, exp: Throwable) : String {
+        val logMap = mapOf(
             "exception" to ExceptionInfo(exp),
             "path" to req.path(),
             "method" to req.method().name(),
             "query" to req.query(),
-            "remoteAddress" to req.remoteAddress().hostAddress(),
+            "remoteAddress" to req.remoteAddress().hostAddress()
         )
+        return objectMapper.writeValueAsString(logMap)
     }
 
-    private fun requestLog(req: HttpServerRequest, exp: CoreException) : LogEvent {
-        return LogEvent(
+    private fun requestLog(req: HttpServerRequest, exp: CoreException) : String {
+        val logMap = mapOf(
             "exception" to CoreExceptionInfo(exp),
             "path" to req.path(),
             "method" to req.method().name(),
             "query" to req.query(),
-            "remoteAddress" to req.remoteAddress().hostAddress(),
+            "remoteAddress" to req.remoteAddress().hostAddress()
         )
+        return objectMapper.writeValueAsString(logMap)
     }
 }
