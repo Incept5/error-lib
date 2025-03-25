@@ -3,6 +3,7 @@ package org.incept5.sample
 import org.incept5.error.CoreException
 import org.incept5.error.Error
 import org.incept5.error.ErrorCategory
+import org.incept5.error.addMetadata
 import io.quarkus.logging.Log
 import jakarta.validation.Valid
 import jakarta.ws.rs.*
@@ -42,5 +43,40 @@ class MessageResource(val testAppService: MessageService) {
                 Error("TEST_ERROR", "location"),
             ),
         )
+    }
+    
+    @GET
+    @Path("/runtimeException")
+    fun getRuntimeException(): Response {
+        val exception = RuntimeException("Runtime exception with metadata")
+        exception.addMetadata(
+            ErrorCategory.VALIDATION,
+            Error("RUNTIME_ERROR", "field")
+        )
+        throw exception
+    }
+    
+    @GET
+    @Path("/unexpectedException")
+    fun getUnexpectedException(): Response {
+        throw RuntimeException("Unexpected exception")
+    }
+    
+    @GET
+    @Path("/notAcceptable")
+    fun getNotAcceptable(): Response {
+        throw NotAcceptableException("Not acceptable test")
+    }
+    
+    @GET
+    @Path("/webApplicationException")
+    fun getWebApplicationException(): Response {
+        throw WebApplicationException("Web application exception", Response.Status.BAD_REQUEST)
+    }
+    
+    @GET
+    @Path("/throwable")
+    fun getThrowable(): Response {
+        throw Throwable("Generic throwable")
     }
 }
