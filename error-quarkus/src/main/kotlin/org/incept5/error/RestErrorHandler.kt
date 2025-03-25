@@ -5,6 +5,7 @@ import org.incept5.error.response.CommonError
 import org.incept5.error.response.CommonErrorResponse
 import io.vertx.core.http.HttpServerRequest
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.quarkus.logging.Log
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.validation.ConstraintViolationException
 import jakarta.ws.rs.*
@@ -22,7 +23,6 @@ import org.jboss.resteasy.reactive.server.ServerExceptionMapper
 open class RestErrorHandler {
 
     companion object {
-        private val log = Logger.getLogger(RestErrorHandler::class.java)
         private val objectMapper = ObjectMapper()
     }
 
@@ -38,10 +38,10 @@ open class RestErrorHandler {
         return try {
             if ( exp.category == ErrorCategory.UNEXPECTED ) {
                 // unexpected exceptions are logged to ERROR and the full stacktrace appears in the logs
-                log.error("Unexpected exception encountered : ${requestLog(req)}", exp)
+                Log.error("Unexpected exception encountered : ${requestLog(req)}", exp)
             } else {
                 // all other exceptions are logged to WARN and the message and first 10 lines of the root cause appear in the logs
-                log.warn("Application exception encountered : ${requestLog(req, exp)}")
+                Log.warn("Application exception encountered : ${requestLog(req, exp)}")
             }
             val response =
                 CommonErrorResponse(
@@ -53,7 +53,7 @@ open class RestErrorHandler {
                 .status(mapErrorCategoryToHttpStatus(exp.category))
                 .entity(response).build()
         } catch (t: Throwable) {
-            log.error("Failed to generate error response", exp)
+            Log.error("Failed to generate error response", exp)
             handleUnexpectedException(req, t)
         }
     }
@@ -106,7 +106,7 @@ open class RestErrorHandler {
         req: HttpServerRequest,
         exp: ConstraintViolationException,
     ): Response {
-        log.warn("Constraint violation : ${requestLog(req)}")
+        Log.warn("Constraint violation : ${requestLog(req)}")
         val errors =
             exp.constraintViolations.map {
                 CommonError(it.message, "VALIDATION", it.propertyPath.toString())
@@ -170,7 +170,7 @@ open class RestErrorHandler {
     }
 
     private fun handleUnexpectedException(req: HttpServerRequest, exp: Throwable): Response {
-        log.error("Unexpected error : {}", requestLog(req), exp)
+        Log.error("Unexpected error : {}", requestLog(req), exp)
         return Response
             .status(Response.Status.INTERNAL_SERVER_ERROR)
             .entity(

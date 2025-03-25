@@ -42,6 +42,16 @@ tasks.test {
     }
 }
 
+// Set the system property for all test-related tasks
+tasks.withType<Test> {
+    systemProperty("java.util.logging.manager", "org.jboss.logmanager.LogManager")
+}
+
+// Also set it for the JVM running the build
+tasks.withType<JavaExec> {
+    systemProperty("java.util.logging.manager", "org.jboss.logmanager.LogManager")
+}
+
 allOpen {
     annotation("jakarta.ws.rs.Path")
     annotation("jakarta.enterprise.context.ApplicationScoped")

@@ -43,7 +43,4 @@ publishing {
 tasks.test {
     dependsOn(tasks.jandex)
     useJUnitPlatform()
-    testLogging {
-        events("passed", "skipped", "failed")
-    }
 }
