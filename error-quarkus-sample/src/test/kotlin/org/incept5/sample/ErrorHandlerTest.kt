@@ -1,4 +1,4 @@
-package org.incept5.error
+package org.incept5.sample
 
 import org.incept5.sample.CreateMessageRequest
 import io.quarkus.test.junit.QuarkusTest

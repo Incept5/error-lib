@@ -1,4 +1,4 @@
-package org.incept5.error
+package org.incept5.sample
 
 import org.incept5.sample.CreateMessageRequest
 import org.incept5.sample.MessageService
@@ -7,6 +7,10 @@ import io.quarkus.test.junit.QuarkusTest
 import io.restassured.RestAssured.given
 import jakarta.ws.rs.ClientErrorException
 import jakarta.ws.rs.core.Response
+import org.incept5.error.CoreException
+import org.incept5.error.Error
+import org.incept5.error.ErrorCategory
+import org.incept5.error.addMetadata
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any

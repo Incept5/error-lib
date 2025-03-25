@@ -7,6 +7,9 @@ import io.kotest.matchers.shouldNotBe
 import io.mockk.every
 import io.mockk.mockk
 import io.vertx.core.http.HttpServerRequest
+import jakarta.validation.ConstraintViolation
+import jakarta.validation.ConstraintViolationException
+import jakarta.validation.Path
 import jakarta.ws.rs.ClientErrorException
 import jakarta.ws.rs.NotAcceptableException
 import jakarta.ws.rs.NotAllowedException
@@ -161,6 +164,55 @@ class RestErrorHandlerTest : StringSpec({
         val suppressedException = exp.suppressed.first()
         suppressedException.message shouldBe "runtime error"
         suppressedException.javaClass shouldBe CoreException::class.java
+    }
+
+    "handleConstraintViolationException should map ConstraintViolationException to CommonErrorResponse" {
+        // Arrange
+        // Create a mock ConstraintViolationException with a mocked set of violations
+        val violations = mockk<Set<ConstraintViolation<*>>>()
+        val violation1 = mockk<ConstraintViolation<*>>()
+        val violation2 = mockk<ConstraintViolation<*>>()
+        val path1 = mockk<Path>()
+        val path2 = mockk<Path>()
+        
+        // Configure mocks
+        every { violations.iterator() } returns listOf(violation1, violation2).iterator()
+        every { violations.size } returns 2
+        every { violation1.message } returns "must not be blank"
+        every { violation2.message } returns "must be greater than 0"
+        every { violation1.propertyPath } returns path1
+        every { violation2.propertyPath } returns path2
+        every { path1.toString() } returns "name"
+        every { path2.toString() } returns "age"
+        
+        val exp = mockk<ConstraintViolationException>()
+        every { exp.message } returns "Validation failed"
+        every { exp.constraintViolations } returns violations
+        
+        val handler = RestErrorHandler()
+
+        // Act
+        val response = handler.handleConstraintViolationException(mockRequest, exp)
+
+        // Assert
+        response.status shouldBe 400
+        val commonErrorResponse = response.entity as CommonErrorResponse
+        commonErrorResponse.correlationId shouldNotBe null
+        commonErrorResponse.httpStatusCode shouldBe 400
+
+        // Should have two errors
+        commonErrorResponse.errors.size shouldBe 2
+        
+        // Verify errors are present with correct values
+        val nameError = commonErrorResponse.errors.find { it.location == "name" }
+        nameError shouldNotBe null
+        nameError!!.message shouldBe "must not be blank"
+        nameError.code shouldBe "VALIDATION"
+        
+        val ageError = commonErrorResponse.errors.find { it.location == "age" }
+        ageError shouldNotBe null
+        ageError!!.message shouldBe "must be greater than 0"
+        ageError.code shouldBe "VALIDATION"
     }
 
 })

@@ -1,0 +1,24 @@
+{
+  "spec": "Add a test to RestErrorHandlerTest that tests ConstraintViolation exceptions",
+  "commitMessage": "Add test for ConstraintViolationException handling in RestErrorHandler",
+  "stats": {
+    "inputTokens": 102243,
+    "cacheWriteTokens": 6879,
+    "cacheReadTokens": 68790,
+    "outputTokens": 3588,
+    "totalTokens": null,
+    "cost": 0.27041175,
+    "currency": "gbp",
+    "processingMillis": 392704,
+    "git": {
+      "filesChanged": 3,
+      "insertions": 58,
+      "deletions": 2,
+      "linesChanged": 58,
+      "testFilesChanged": 3,
+      "testInsertions": 435,
+      "testDeletions": 0,
+      "testLinesChanged": 435
+    }
+  }
+}
