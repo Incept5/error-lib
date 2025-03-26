@@ -1,0 +1,24 @@
+{
+  "spec": "Add a README with comprehensive details on error-core and error-quarkus and how to use them in rest services and how to include them as dependencies using gradle and maven",
+  "commitMessage": "Add comprehensive README with usage instructions for error-core and error-quarkus",
+  "stats": {
+    "inputTokens": 54310,
+    "cacheWriteTokens": 6922,
+    "cacheReadTokens": 69220,
+    "outputTokens": 2606,
+    "totalTokens": null,
+    "cost": 0.151515,
+    "currency": "gbp",
+    "processingMillis": 58325,
+    "git": {
+      "filesChanged": 2,
+      "insertions": 280,
+      "deletions": 24,
+      "linesChanged": 280,
+      "testFilesChanged": 0,
+      "testInsertions": 0,
+      "testDeletions": 0,
+      "testLinesChanged": 0
+    }
+  }
+}
