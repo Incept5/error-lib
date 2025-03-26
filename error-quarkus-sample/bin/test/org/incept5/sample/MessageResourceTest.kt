@@ -111,7 +111,7 @@ class MessageResourceTest {
         val error = errors[0] as Map<*, *>
         assertEquals("must not be blank", error["message"])
         assertEquals("VALIDATION", error["code"])
-        assertEquals("createMessage.createMessageRequest.message", error["location"])
+        assertEquals("createMessage.arg0.message", error["location"])
     }
 
     @Test
