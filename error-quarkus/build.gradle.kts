@@ -35,7 +35,33 @@ dependencies {
 publishing {
     publications {
         create<MavenPublication>("maven") {
-            from(components["kotlin"])
+            groupId = project.group.toString()
+            artifactId = "error-quarkus"
+            version = project.version.toString()
+            
+            from(components["java"])
+            
+            // POM information
+            pom {
+                name.set("Error Quarkus")
+                description.set("Quarkus integration for Error Handling in Rest Services")
+                url.set("https://github.com/incept5/error-lib")
+                
+                licenses {
+                    license {
+                        name.set("The Apache License, Version 2.0")
+                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                    }
+                }
+                
+                developers {
+                    developer {
+                        id.set("incept5")
+                        name.set("Incept5")
+                        email.set("info@incept5.com")
+                    }
+                }
+            }
         }
     }
 }

@@ -16,4 +16,10 @@ install:
   - echo "Building version $VERSION"
   - ./gradlew build publishToMavenLocal -Pgroup=com.github.incept5 -Pversion=$VERSION
   - echo "Published artifacts to local Maven repository"
+  - echo "Verifying error-core artifacts:"
   - find ~/.m2/repository -name "error-core*" | grep "com/github/incept5" | sort
+  - echo "Verifying error-quarkus artifacts:"
+  - find ~/.m2/repository -name "error-quarkus*" | grep "com/github/incept5" | sort
+  # Verify that both JARs exist
+  - test -f ~/.m2/repository/com/github/incept5/error-core/$VERSION/error-core-$VERSION.jar || { echo "error-core JAR not found"; exit 1; }
+  - test -f ~/.m2/repository/com/github/incept5/error-quarkus/$VERSION/error-quarkus-$VERSION.jar || { echo "error-quarkus JAR not found"; exit 1; }

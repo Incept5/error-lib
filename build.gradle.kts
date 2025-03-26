@@ -37,8 +37,6 @@ java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(21))
     }
-    withJavadocJar()
-    withSourcesJar()
 }
 
 // Configure Kotlin to target JVM 21
@@ -48,46 +46,35 @@ kotlin {
     compilerOptions {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
     }
-
 }
 
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            // Explicitly set groupId, artifactId, and version
-            groupId = project.group.toString()
-            artifactId = "error-core"
-            version = project.version.toString()
-
-            from(components["java"])
-
-            // POM information is automatically included with sources and javadoc
-            pom {
-                name.set("Error Core ")
-                description.set("Core functionality for Error Handling in Rest Services")
-                url.set("https://github.com/incept5/error-core")
-
-                licenses {
-                    license {
-                        name.set("The Apache License, Version 2.0")
-                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
-                    }
-                }
-
-                developers {
-                    developer {
-                        id.set("incept5")
-                        name.set("Incept5")
-                        email.set("info@incept5.com")
-                    }
-                }
-            }
+// Apply common configuration to all subprojects
+subprojects {
+    apply(plugin = "org.jetbrains.kotlin.jvm")
+    apply(plugin = "java-library")
+    apply(plugin = "maven-publish")
+    
+    group = rootProject.group
+    version = rootProject.version
+    
+    java {
+        withJavadocJar()
+        withSourcesJar()
+    }
+    
+    // Configure Kotlin to target JVM 21
+    kotlin {
+        jvmToolchain(21)
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
         }
     }
-
-    // Configure local Maven repository for local builds
-    repositories {
-        mavenLocal()
+    
+    // Configure publishing for all subprojects
+    configure<PublishingExtension> {
+        repositories {
+            mavenLocal()
+        }
     }
 }
 

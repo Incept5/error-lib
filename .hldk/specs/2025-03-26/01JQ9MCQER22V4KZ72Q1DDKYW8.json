@@ -1,0 +1,24 @@
+{
+  "spec": "look at the circleci config and the jitpack config as well as the build scripts and ensure that when the project is built it results in the publishing of two artefacts to jitpack: error-core jar and error-quarkus jar",
+  "commitMessage": "Fix JitPack publishing for error-core and error-quarkus artifacts\n\n- Updated root build.gradle.kts to properly configure subprojects\n- Fixed error-core and error-quarkus build scripts to publish with correct artifactIds\n- Updated jitpack.yml to verify both artifacts are published\n- Fixed CircleCI config to properly trigger and verify JitPack builds\n- Ensured source and javadoc JARs are included in publications",
+  "stats": {
+    "inputTokens": 184600,
+    "cacheWriteTokens": 6922,
+    "cacheReadTokens": 131518,
+    "outputTokens": 7681,
+    "totalTokens": null,
+    "cost": 0.50176125,
+    "currency": "gbp",
+    "processingMillis": 370461,
+    "git": {
+      "filesChanged": 17,
+      "insertions": 122,
+      "deletions": 344,
+      "linesChanged": 344,
+      "testFilesChanged": 0,
+      "testInsertions": 0,
+      "testDeletions": 0,
+      "testLinesChanged": 0
+    }
+  }
+}
