@@ -112,12 +112,14 @@ open class RestErrorHandler {
         req: HttpServerRequest,
         exp: WebApplicationException,
     ): Response {
-        // Check if this is an XML parsing error
-        val isXmlError = exp.message?.contains("xml", ignoreCase = true) == true ||
-                         exp.cause?.message?.contains("xml", ignoreCase = true) == true ||
-                         exp.cause?.javaClass?.name?.contains("xml", ignoreCase = true) == true
+        // Log the exception details for debugging
+        Log.debug("WebApplicationException: ${exp.message}")
+        Log.debug("Cause: ${exp.cause?.javaClass?.name}: ${exp.cause?.message}")
         
-        val errorMessage = if (isXmlError) "Malformed XML Content" else exp.message ?: "Web Application Exception"
+        // For JSON parsing errors, we need to preserve the original error message
+        // The message should already be set correctly in the CustomReaderInterceptor
+        val errorMessage = exp.message ?: "Web Application Exception"
+        
         return handleCoreException(req, toCoreException(ErrorCategory.VALIDATION, exp, errorMessage))
     }
 

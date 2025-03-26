@@ -28,20 +28,39 @@ class CustomReaderInterceptor : ReaderInterceptor {
             context.proceed()
         } catch (e: Exception) {
             Log.debug("Reader interceptor caught exception: ${e.javaClass.name}: ${e.message}")
+            Log.debug("Cause: ${e.cause?.javaClass?.name}: ${e.cause?.message}")
             
             // Already a WebApplicationException so just throw it
             if (e is WebApplicationException) {
                 throw e
             }
             
-            // Handle XML parsing errors specifically
+            // For JSON parsing errors, we need to extract the exact error message from Jackson
+            val jacksonError = if (e.javaClass.name.contains("jackson", ignoreCase = true)) {
+                e.message
+            } else if (e.cause?.javaClass?.name?.contains("jackson", ignoreCase = true) == true) {
+                e.cause?.message
+            } else {
+                null
+            }
+            
+            if (jacksonError != null) {
+                Log.debug("Found Jackson error: $jacksonError")
+                // Pass the original Jackson error message
+                throw WebApplicationException(jacksonError, e, Response.Status.BAD_REQUEST)
+            }
+            
+            // Handle other parsing errors
             val errorMessage = when {
+                // XML parsing errors
                 e is SAXParseException || 
                 e is XMLStreamException || 
                 e.cause is SAXParseException || 
                 e.cause is XMLStreamException ||
                 e.message?.contains("xml", ignoreCase = true) == true ||
                 e.cause?.message?.contains("xml", ignoreCase = true) == true -> "Malformed XML Content"
+                
+                // Other format errors
                 else -> "Invalid Format"
             }
             
