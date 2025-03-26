@@ -1,0 +1,24 @@
+{
+  "spec": "add some tests to error-core that test that the location in the error message is set correctly",
+  "commitMessage": "Add tests for error location handling\n\n- Added ErrorLocationTest to verify Error class location handling\n- Added ErrorResponseLocationTest to verify CommonError location handling\n- Added ErrorMappingTest to verify location preservation during mapping\n- Tests cover various location formats and null location handling",
+  "stats": {
+    "inputTokens": 161532,
+    "cacheWriteTokens": 6876,
+    "cacheReadTokens": 123768,
+    "outputTokens": 7755,
+    "totalTokens": null,
+    "cost": 0.45069075000000003,
+    "currency": "gbp",
+    "processingMillis": 133370,
+    "git": {
+      "filesChanged": 6,
+      "insertions": 406,
+      "deletions": 0,
+      "linesChanged": 406,
+      "testFilesChanged": 6,
+      "testInsertions": 406,
+      "testDeletions": 0,
+      "testLinesChanged": 406
+    }
+  }
+}
