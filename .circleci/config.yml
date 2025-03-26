@@ -37,13 +37,13 @@ jobs:
             - run:
                 name: Build with Build Number
                 command: |
-            echo "Using build number: ${BUILD_NUMBER}"
-                ./gradlew clean build -Pversion=1.0.${BUILD_NUMBER}
-                - run:
+                  echo "Using build number: ${BUILD_NUMBER}"
+                  ./gradlew clean build -Pversion=1.0.${BUILD_NUMBER}
+            - run:
                 name: Publish to Local Maven Repository
                 command: |
-                echo "Publishing with version: 1.0.${BUILD_NUMBER}"
-                ./gradlew publishToMavenLocal -Pversion=1.0.${BUILD_NUMBER}
+                  echo "Publishing with version: 1.0.${BUILD_NUMBER}"
+                  ./gradlew publishToMavenLocal -Pversion=1.0.${BUILD_NUMBER}
       - run:
           name: Create and Push Git Tag
           command: |
