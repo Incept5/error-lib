@@ -1,27 +1,44 @@
-// Always set a default version first
-version = "1.0.0-SNAPSHOT"  // Default version
+// Set default version and group
+group = "com.github.incept5"  // Default group
 
-// For local builds, use 0-SNAPSHOT. For CI builds, use the build number from CircleCI
-// If a specific version is provided (e.g., from JitPack), use that instead
-val providedVersion = findProperty("version") as? String
-val buildNumber = findProperty("buildNumber") as? String
+// Determine the version to use
+val providedVersion = project.properties["version"]?.toString()
+val buildNumber = project.properties["buildNumber"]?.toString()
 
-// Override default version if parameters are provided
-if (providedVersion != null && providedVersion.isNotEmpty()) {
+// Set the version based on the available information
+if (providedVersion != null && providedVersion != "unspecified" && providedVersion != "1.0.0-SNAPSHOT") {
     version = providedVersion
-    println("Using provided version: $providedVersion")
+    println("Using explicitly provided version: $providedVersion")
 } else if (buildNumber != null && buildNumber.isNotEmpty()) {
     version = "1.0.$buildNumber"
     println("Using build number version: 1.0.$buildNumber")
 } else {
-    println("Using default version: $version")
+    version = "1.0.0-SNAPSHOT"
+    println("Using default version: 1.0.0-SNAPSHOT")
 }
 
-// Always ensure we have a valid group ID
-val providedGroup = findProperty("group") as? String
-group = if (providedGroup.isNullOrBlank()) "com.github.incept5" else providedGroup
+// If a specific group is provided, use that
+val providedGroup = project.properties["group"]?.toString()
+if (providedGroup != null && providedGroup.isNotEmpty()) {
+    group = providedGroup
+    println("Using provided group: $providedGroup")
+} else {
+    println("Using default group: $group")
+}
 
-// Log the group and version for debugging
+// Print all project properties for debugging
+println("All project properties:")
+project.properties.forEach { (key, value) ->
+    if (key.contains("version") || key.contains("group") || key.contains("buildNumber")) {
+        println("  $key = $value")
+    }
+}
+
+// Print the final version and group
+println("Final version: $version")
+println("Final group: $group")
+
+// Log the final group and version for debugging
 println("Building with group: $group")
 println("Building with version: $version")
 

@@ -36,10 +36,14 @@ jobs:
           steps:
             - run:
                 name: Build with Build Number
-                command: ./gradlew clean build -PbuildNumber=${BUILD_NUMBER}
-            - run:
+                command: |
+            echo "Using build number: ${BUILD_NUMBER}"
+                ./gradlew clean build -Pversion=1.0.${BUILD_NUMBER}
+                - run:
                 name: Publish to Local Maven Repository
-                command: ./gradlew publishToMavenLocal -PbuildNumber=${BUILD_NUMBER}
+                command: |
+                echo "Publishing with version: 1.0.${BUILD_NUMBER}"
+                ./gradlew publishToMavenLocal -Pversion=1.0.${BUILD_NUMBER}
       - run:
           name: Create and Push Git Tag
           command: |
@@ -48,8 +52,15 @@ jobs:
             echo "Creating tag for version: ${VERSION}"
             git config user.email "ci@incept5.com"
             git config user.name "CircleCI"
-            git tag -a "${VERSION}" -m "Release version ${VERSION}"
-            git push origin "${VERSION}"
+            
+            # Check if tag already exists
+            if git rev-parse "${VERSION}" >/dev/null 2>&1; then
+              echo "Tag ${VERSION} already exists, skipping tag creation"
+            else
+              echo "Creating new tag ${VERSION}"
+              git tag -a "${VERSION}" -m "Release version ${VERSION}"
+              git push origin "${VERSION}"
+            fi
       - run:
           name: Trigger JitPack Build
           command: |
@@ -57,62 +68,65 @@ jobs:
             
             # Debug information
             echo "Maven repository location: $HOME/.m2/repository"
-            echo "Verifying local artifacts:"
+            echo "Using version: ${VERSION}"
             
-            # List all error-core and error-quarkus artifacts in the local Maven repository
-            echo "All error-core artifacts:"
-            find $HOME/.m2/repository -name "error-core*" | sort
+            # List all artifacts in the local Maven repository
+            echo "All artifacts in Maven repository:"
+            find $HOME/.m2/repository/com/github/incept5 -type f -name "*.jar" | sort
             
-            echo "All error-quarkus artifacts:"
-            find $HOME/.m2/repository -name "error-quarkus*" | sort
-            
-            # Specifically look for artifacts with the expected version
-            echo "Looking for artifacts with version ${VERSION}:"
-            find $HOME/.m2/repository -path "*${VERSION}*" | sort
-            
-            # Check if the expected directories exist
-            echo "Checking if expected directories exist:"
-            if [ -d "$HOME/.m2/repository/com/github/incept5/error-core/${VERSION}" ]; then
-              echo "Directory for error-core exists"
-              ls -la "$HOME/.m2/repository/com/github/incept5/error-core/${VERSION}"
-            else
-              echo "Directory for error-core does not exist"
-              # Check parent directory
-              echo "Contents of parent directory:"
-              ls -la "$HOME/.m2/repository/com/github/incept5/error-core/" || echo "Parent directory does not exist"
-            fi
-            
-            if [ -d "$HOME/.m2/repository/com/github/incept5/error-quarkus/${VERSION}" ]; then
-              echo "Directory for error-quarkus exists"
-              ls -la "$HOME/.m2/repository/com/github/incept5/error-quarkus/${VERSION}"
-            else
-              echo "Directory for error-quarkus does not exist"
-              # Check parent directory
-              echo "Contents of parent directory:"
-              ls -la "$HOME/.m2/repository/com/github/incept5/error-quarkus/" || echo "Parent directory does not exist"
-            fi
-            
-            # Republish with explicit version to ensure artifacts are in the correct location
-            echo "Republishing artifacts with explicit version ${VERSION}"
-            ./gradlew clean build publishToMavenLocal -Pgroup=com.github.incept5 -Pversion=${VERSION}
-            
-            # Verify that both JARs exist locally after republishing
+            # Verify that both JARs exist locally
             if [ ! -f "$HOME/.m2/repository/com/github/incept5/error-core/${VERSION}/error-core-${VERSION}.jar" ]; then
               echo "ERROR: error-core JAR not found locally at expected path"
               echo "Expected: $HOME/.m2/repository/com/github/incept5/error-core/${VERSION}/error-core-${VERSION}.jar"
+              
+              # Check if the directory exists
+              if [ -d "$HOME/.m2/repository/com/github/incept5/error-core" ]; then
+                echo "Available versions for error-core:"
+                ls -la "$HOME/.m2/repository/com/github/incept5/error-core/"
+              fi
+              
               # Try to find it elsewhere
               echo "Searching for error-core JAR:"
-              find $HOME/.m2/repository -name "error-core-${VERSION}.jar" || echo "No matching JAR found"
-              exit 1
+              find $HOME/.m2/repository -name "error-core-*.jar" | sort
+              
+              # Try one more publish with explicit version
+              echo "Attempting one more publish with explicit version ${VERSION}"
+              ./gradlew :error-core:clean :error-core:build :error-core:publishToMavenLocal -Pversion=${VERSION} --stacktrace
+              
+              # Check again
+              if [ -f "$HOME/.m2/repository/com/github/incept5/error-core/${VERSION}/error-core-${VERSION}.jar" ]; then
+                echo "Successfully published error-core JAR after retry"
+              else
+                echo "Failed to publish error-core JAR after retry"
+                exit 1
+              fi
             fi
             
             if [ ! -f "$HOME/.m2/repository/com/github/incept5/error-quarkus/${VERSION}/error-quarkus-${VERSION}.jar" ]; then
               echo "ERROR: error-quarkus JAR not found locally at expected path"
               echo "Expected: $HOME/.m2/repository/com/github/incept5/error-quarkus/${VERSION}/error-quarkus-${VERSION}.jar"
+              
+              # Check if the directory exists
+              if [ -d "$HOME/.m2/repository/com/github/incept5/error-quarkus" ]; then
+                echo "Available versions for error-quarkus:"
+                ls -la "$HOME/.m2/repository/com/github/incept5/error-quarkus/"
+              fi
+              
               # Try to find it elsewhere
               echo "Searching for error-quarkus JAR:"
-              find $HOME/.m2/repository -name "error-quarkus-${VERSION}.jar" || echo "No matching JAR found"
-              exit 1
+              find $HOME/.m2/repository -name "error-quarkus-*.jar" | sort
+              
+              # Try one more publish with explicit version
+              echo "Attempting one more publish with explicit version ${VERSION}"
+              ./gradlew :error-quarkus:clean :error-quarkus:build :error-quarkus:publishToMavenLocal -Pversion=${VERSION} --stacktrace
+              
+              # Check again
+              if [ -f "$HOME/.m2/repository/com/github/incept5/error-quarkus/${VERSION}/error-quarkus-${VERSION}.jar" ]; then
+                echo "Successfully published error-quarkus JAR after retry"
+              else
+                echo "Failed to publish error-quarkus JAR after retry"
+                exit 1
+              fi
             fi
             
             echo "Both artifacts verified locally"
