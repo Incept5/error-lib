@@ -9,8 +9,12 @@ val buildNumber = findProperty("buildNumber") as? String
 // Override default version if parameters are provided
 if (providedVersion != null && providedVersion.isNotEmpty()) {
     version = providedVersion
+    println("Using provided version: $providedVersion")
 } else if (buildNumber != null && buildNumber.isNotEmpty()) {
     version = "1.0.$buildNumber"
+    println("Using build number version: 1.0.$buildNumber")
+} else {
+    println("Using default version: $version")
 }
 
 // Always ensure we have a valid group ID
@@ -20,6 +24,21 @@ group = if (providedGroup.isNullOrBlank()) "com.github.incept5" else providedGro
 // Log the group and version for debugging
 println("Building with group: $group")
 println("Building with version: $version")
+
+// Additional debug information
+println("System properties:")
+System.getProperties().forEach { key, value ->
+    if (key.toString().contains("version") || key.toString().contains("group")) {
+        println("  $key = $value")
+    }
+}
+
+println("Gradle properties:")
+project.properties.forEach { key, value ->
+    if (key.toString().contains("version") || key.toString().contains("group")) {
+        println("  $key = $value")
+    }
+}
 
 plugins {
     // Apply the org.jetbrains.kotlin.jvm Plugin to add support for Kotlin.
@@ -57,6 +76,11 @@ subprojects {
     group = rootProject.group
     version = rootProject.version
     
+    // Log subproject configuration
+    println("Configuring subproject: ${project.name}")
+    println("  Group: ${project.group}")
+    println("  Version: ${project.version}")
+    
     java {
         withJavadocJar()
         withSourcesJar()
@@ -75,6 +99,51 @@ subprojects {
         repositories {
             mavenLocal()
         }
+        
+        // Ensure all publications use the correct group and version
+        publications.withType<MavenPublication>().configureEach {
+            groupId = project.group.toString()
+            version = project.version.toString()
+            
+            println("Configured publication for ${project.name}:")
+            println("  GroupId: $groupId")
+            println("  ArtifactId: $artifactId")
+            println("  Version: $version")
+        }
+    }
+    
+    // Add a task to verify the publication
+    tasks.register("verifyPublication") {
+        dependsOn("publishToMavenLocal")
+        doLast {
+            val projectVersion = project.version.toString()
+            val projectGroup = project.group.toString()
+            val artifactId = project.name
+            val expectedPath = "${System.getProperty("user.home")}/.m2/repository/${projectGroup.replace(".", "/")}/$artifactId/$projectVersion/$artifactId-$projectVersion.jar"
+            
+            println("Verifying publication for ${project.name}")
+            println("  Expected JAR path: $expectedPath")
+            
+            val jarFile = file(expectedPath)
+            if (jarFile.exists()) {
+                println("  ✅ JAR file exists at expected path")
+            } else {
+                println("  ❌ JAR file does not exist at expected path")
+                println("  Searching for JAR file...")
+                val homeDir = System.getProperty("user.home")
+                val jarFiles = fileTree("$homeDir/.m2/repository").matching {
+                    include("**/$artifactId-$projectVersion.jar")
+                }
+                jarFiles.forEach { file ->
+                    println("  Found JAR at: ${file.absolutePath}")
+                }
+            }
+        }
+    }
+    
+    // Always verify publication after publishing to Maven local
+    tasks.named("publishToMavenLocal") {
+        finalizedBy("verifyPublication")
     }
 }
 

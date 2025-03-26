@@ -14,12 +14,33 @@ install:
       echo "Using commit hash as version: $VERSION";
     fi
   - echo "Building version $VERSION"
+  
+  # Ensure we're using the correct group ID
   - ./gradlew build publishToMavenLocal -Pgroup=com.github.incept5 -Pversion=$VERSION
+  
+  # Debug information
   - echo "Published artifacts to local Maven repository"
+  - echo "Maven repository location: $HOME/.m2/repository"
   - echo "Verifying error-core artifacts:"
-  - find ~/.m2/repository -name "error-core*" | grep "com/github/incept5" | sort
+  - find $HOME/.m2/repository -name "error-core*" | grep "com/github/incept5" || echo "No error-core artifacts found"
   - echo "Verifying error-quarkus artifacts:"
-  - find ~/.m2/repository -name "error-quarkus*" | grep "com/github/incept5" | sort
-  # Verify that both JARs exist
-  - test -f ~/.m2/repository/com/github/incept5/error-core/$VERSION/error-core-$VERSION.jar || { echo "error-core JAR not found"; exit 1; }
-  - test -f ~/.m2/repository/com/github/incept5/error-quarkus/$VERSION/error-quarkus-$VERSION.jar || { echo "error-quarkus JAR not found"; exit 1; }
+  - find $HOME/.m2/repository -name "error-quarkus*" | grep "com/github/incept5" || echo "No error-quarkus artifacts found"
+  
+  # Verify that both JARs exist with more detailed error messages
+  - if [ ! -f $HOME/.m2/repository/com/github/incept5/error-core/$VERSION/error-core-$VERSION.jar ]; then
+      echo "ERROR: error-core JAR not found at $HOME/.m2/repository/com/github/incept5/error-core/$VERSION/error-core-$VERSION.jar";
+      echo "Contents of directory:";
+      ls -la $HOME/.m2/repository/com/github/incept5/error-core/$VERSION/ || echo "Directory does not exist";
+      exit 1;
+    else
+      echo "Found error-core JAR at $HOME/.m2/repository/com/github/incept5/error-core/$VERSION/error-core-$VERSION.jar";
+    fi
+  
+  - if [ ! -f $HOME/.m2/repository/com/github/incept5/error-quarkus/$VERSION/error-quarkus-$VERSION.jar ]; then
+      echo "ERROR: error-quarkus JAR not found at $HOME/.m2/repository/com/github/incept5/error-quarkus/$VERSION/error-quarkus-$VERSION.jar";
+      echo "Contents of directory:";
+      ls -la $HOME/.m2/repository/com/github/incept5/error-quarkus/$VERSION/ || echo "Directory does not exist";
+      exit 1;
+    else
+      echo "Found error-quarkus JAR at $HOME/.m2/repository/com/github/incept5/error-quarkus/$VERSION/error-quarkus-$VERSION.jar";
+    fi

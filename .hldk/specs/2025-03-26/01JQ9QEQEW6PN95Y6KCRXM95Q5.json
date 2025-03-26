@@ -1,0 +1,24 @@
+{
+  "spec": "in circleci when triggering the jitpack build it fails with this error:\nverifying local artifacts:\n/home/circleci/.m2/repository/com/github/incept5/error-core\n/home/circleci/.m2/repository/com/github/incept5/error-core/1.0.0-SNAPSHOT/error-core-1.0.0-SNAPSHOT.jar\n/home/circleci/.m2/repository/com/github/incept5/error-core/1.0.0-SNAPSHOT/error-core-1.0.0-SNAPSHOT-javadoc.jar\n/home/circleci/.m2/repository/com/github/incept5/error-core/1.0.0-SNAPSHOT/error-core-1.0.0-SNAPSHOT.module\n/home/circleci/.m2/repository/com/github/incept5/error-core/1.0.0-SNAPSHOT/error-core-1.0.0-SNAPSHOT.pom\n/home/circleci/.m2/repository/com/github/incept5/error-core/1.0.0-SNAPSHOT/error-core-1.0.0-SNAPSHOT-sources.jar\n/home/circleci/.m2/repository/com/github/incept5/error-quarkus\n/home/circleci/.m2/repository/com/github/incept5/error-quarkus/1.0.0-SNAPSHOT/error-quarkus-1.0.0-SNAPSHOT.jar\n/home/circleci/.m2/repository/com/github/incept5/error-quarkus/1.0.0-SNAPSHOT/error-quarkus-1.0.0-SNAPSHOT-javadoc.jar\n/home/circleci/.m2/repository/com/github/incept5/error-quarkus/1.0.0-SNAPSHOT/error-quarkus-1.0.0-SNAPSHOT.module\n/home/circleci/.m2/repository/com/github/incept5/error-quarkus/1.0.0-SNAPSHOT/error-quarkus-1.0.0-SNAPSHOT.pom\n/home/circleci/.m2/repository/com/github/incept5/error-quarkus/1.0.0-SNAPSHOT/error-quarkus-1.0.0-SNAPSHOT-sources.jar\nERROR: error-core JAR not found locally",
+  "commitMessage": "Fix JitPack build issues by improving artifact verification and debugging",
+  "stats": {
+    "inputTokens": 121602,
+    "cacheWriteTokens": 6932,
+    "cacheReadTokens": 97048,
+    "outputTokens": 6691,
+    "totalTokens": null,
+    "cost": 0.34887825,
+    "currency": "gbp",
+    "processingMillis": 205003,
+    "git": {
+      "filesChanged": 3,
+      "insertions": 147,
+      "deletions": 13,
+      "linesChanged": 147,
+      "testFilesChanged": 0,
+      "testInsertions": 0,
+      "testDeletions": 0,
+      "testLinesChanged": 0
+    }
+  }
+}

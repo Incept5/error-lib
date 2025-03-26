@@ -55,19 +55,63 @@ jobs:
           command: |
             VERSION="1.0.${BUILD_NUMBER}"
             
-            # Verify local artifacts
+            # Debug information
+            echo "Maven repository location: $HOME/.m2/repository"
             echo "Verifying local artifacts:"
-            find ~/.m2/repository -name "error-core*" | grep "com/github/incept5" | sort
-            find ~/.m2/repository -name "error-quarkus*" | grep "com/github/incept5" | sort
             
-            # Verify that both JARs exist locally
-            if [ ! -f ~/.m2/repository/com/github/incept5/error-core/${VERSION}/error-core-${VERSION}.jar ]; then
-              echo "ERROR: error-core JAR not found locally"
+            # List all error-core and error-quarkus artifacts in the local Maven repository
+            echo "All error-core artifacts:"
+            find $HOME/.m2/repository -name "error-core*" | sort
+            
+            echo "All error-quarkus artifacts:"
+            find $HOME/.m2/repository -name "error-quarkus*" | sort
+            
+            # Specifically look for artifacts with the expected version
+            echo "Looking for artifacts with version ${VERSION}:"
+            find $HOME/.m2/repository -path "*${VERSION}*" | sort
+            
+            # Check if the expected directories exist
+            echo "Checking if expected directories exist:"
+            if [ -d "$HOME/.m2/repository/com/github/incept5/error-core/${VERSION}" ]; then
+              echo "Directory for error-core exists"
+              ls -la "$HOME/.m2/repository/com/github/incept5/error-core/${VERSION}"
+            else
+              echo "Directory for error-core does not exist"
+              # Check parent directory
+              echo "Contents of parent directory:"
+              ls -la "$HOME/.m2/repository/com/github/incept5/error-core/" || echo "Parent directory does not exist"
+            fi
+            
+            if [ -d "$HOME/.m2/repository/com/github/incept5/error-quarkus/${VERSION}" ]; then
+              echo "Directory for error-quarkus exists"
+              ls -la "$HOME/.m2/repository/com/github/incept5/error-quarkus/${VERSION}"
+            else
+              echo "Directory for error-quarkus does not exist"
+              # Check parent directory
+              echo "Contents of parent directory:"
+              ls -la "$HOME/.m2/repository/com/github/incept5/error-quarkus/" || echo "Parent directory does not exist"
+            fi
+            
+            # Republish with explicit version to ensure artifacts are in the correct location
+            echo "Republishing artifacts with explicit version ${VERSION}"
+            ./gradlew clean build publishToMavenLocal -Pgroup=com.github.incept5 -Pversion=${VERSION}
+            
+            # Verify that both JARs exist locally after republishing
+            if [ ! -f "$HOME/.m2/repository/com/github/incept5/error-core/${VERSION}/error-core-${VERSION}.jar" ]; then
+              echo "ERROR: error-core JAR not found locally at expected path"
+              echo "Expected: $HOME/.m2/repository/com/github/incept5/error-core/${VERSION}/error-core-${VERSION}.jar"
+              # Try to find it elsewhere
+              echo "Searching for error-core JAR:"
+              find $HOME/.m2/repository -name "error-core-${VERSION}.jar" || echo "No matching JAR found"
               exit 1
             fi
             
-            if [ ! -f ~/.m2/repository/com/github/incept5/error-quarkus/${VERSION}/error-quarkus-${VERSION}.jar ]; then
-              echo "ERROR: error-quarkus JAR not found locally"
+            if [ ! -f "$HOME/.m2/repository/com/github/incept5/error-quarkus/${VERSION}/error-quarkus-${VERSION}.jar" ]; then
+              echo "ERROR: error-quarkus JAR not found locally at expected path"
+              echo "Expected: $HOME/.m2/repository/com/github/incept5/error-quarkus/${VERSION}/error-quarkus-${VERSION}.jar"
+              # Try to find it elsewhere
+              echo "Searching for error-quarkus JAR:"
+              find $HOME/.m2/repository -name "error-quarkus-${VERSION}.jar" || echo "No matching JAR found"
               exit 1
             fi
             
