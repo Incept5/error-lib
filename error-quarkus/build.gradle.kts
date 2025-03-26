@@ -45,7 +45,7 @@ publishing {
             pom {
                 name.set("Error Quarkus")
                 description.set("Quarkus integration for Error Handling in Rest Services")
-                url.set("https://github.com/incept5/error-lib")
+                url.set("https://github.com/incept5/error-quarkus")
                 
                 licenses {
                     license {
@@ -69,4 +69,14 @@ publishing {
 tasks.test {
     dependsOn(tasks.jandex)
     useJUnitPlatform()
+}
+
+// For JitPack compatibility
+tasks.register("install") {
+    dependsOn(tasks.named("publishToMavenLocal"))
+}
+
+// Always publish to local Maven repository after build for local development
+tasks.named("build") {
+    finalizedBy(tasks.named("publishToMavenLocal"))
 }

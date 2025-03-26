@@ -78,12 +78,3 @@ subprojects {
     }
 }
 
-// For JitPack compatibility
-tasks.register("install") {
-    dependsOn(tasks.named("publishToMavenLocal"))
-}
-
-// Always publish to local Maven repository after build for local development
-tasks.named("build") {
-    finalizedBy(tasks.named("publishToMavenLocal"))
-}
