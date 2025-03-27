@@ -187,3 +187,15 @@ tasks.withType<PublishToMavenLocal>().configureEach {
     }
 }
 
+// Explicitly disable publishing for the root project
+publishing {
+    publications.configureEach {
+        // This will effectively disable the publication
+        // by making it impossible to resolve
+        if (this is MavenPublication) {
+            artifactId = "DO-NOT-PUBLISH"
+            version = "DISABLED"
+        }
+    }
+}
+

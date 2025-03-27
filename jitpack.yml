@@ -2,6 +2,9 @@ jdk:
   - openjdk21
 before_install:
   - ./gradlew clean
+  # Create a custom settings.xml to ensure JitPack uses our artifacts correctly
+  - mkdir -p ~/.m2
+  - echo "<settings><servers><server><id>jitpack.io</id><username>jitpack</username><password>jitpack</password></server></servers></settings>" > ~/.m2/settings.xml
 install:
   # Extract version from git tag (JitPack sets the version based on the git tag)
   - if [ -n "$VERSION" ]; then
@@ -16,7 +19,7 @@ install:
   - echo "Building version $VERSION"
   
   # Build and publish with explicit version - only the modules we want
-  - ./gradlew clean build publishJitPackModules -Pgroup=com.github.incept5 -Pversion=$VERSION --stacktrace
+  - ./gradlew clean :error-core:build :error-quarkus:build :error-core:publishToMavenLocal :error-quarkus:publishToMavenLocal -Pgroup=com.github.incept5 -Pversion=$VERSION --stacktrace
   
   # Debug information
   - echo "Published artifacts to local Maven repository"
@@ -85,3 +88,21 @@ install:
     else
       echo "Found error-quarkus JAR at $HOME/.m2/repository/com/github/incept5/error-quarkus/$VERSION/error-quarkus-$VERSION.jar";
     fi
+    
+  # Ensure the parent artifact is not published
+  - if [ -f $HOME/.m2/repository/com/github/incept5/error-lib/$VERSION/error-lib-$VERSION.jar ]; then
+      echo "WARNING: Found error-lib parent JAR, which should not be published";
+      echo "Removing error-lib parent JAR to prevent it from being published";
+      rm -f $HOME/.m2/repository/com/github/incept5/error-lib/$VERSION/error-lib-$VERSION*.jar;
+      rm -f $HOME/.m2/repository/com/github/incept5/error-lib/$VERSION/error-lib-$VERSION*.pom;
+    else
+      echo "Verified: No error-lib parent JAR found (as expected)";
+    fi
+    
+  # Final verification
+  - echo "Final verification of published artifacts:"
+  - echo "Expected artifacts:"
+  - echo "  com.github.incept5:error-core:$VERSION"
+  - echo "  com.github.incept5:error-quarkus:$VERSION"
+  - echo "Actual artifacts in Maven repository:"
+  - find $HOME/.m2/repository/com/github/incept5 -type f -name "*.jar" | sort

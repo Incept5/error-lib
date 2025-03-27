@@ -31,6 +31,7 @@ tasks.test {
 publishing {
     publications {
         create<MavenPublication>("maven") {
+            // Explicitly set the coordinates for JitPack
             groupId = "com.github.incept5"
             artifactId = "error-core"
             version = project.version.toString()
