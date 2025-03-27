@@ -31,8 +31,11 @@ tasks.test {
 publishing {
     publications {
         create<MavenPublication>("maven") {
+            // Get the publishGroupId from root project or use default
+            val publishGroupId = rootProject.properties["publishGroupId"]?.toString() ?: "com.github.incept5"
+            
             // Explicitly set the coordinates for JitPack
-            groupId = "com.github.incept5"
+            groupId = publishGroupId
             artifactId = "error-core"
             version = project.version.toString()
             

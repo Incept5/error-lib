@@ -17,7 +17,8 @@ install:
   - echo "Building version $VERSION"
   
   # Build and publish with explicit version - only the modules we want
-  - ./gradlew clean :error-core:build :error-quarkus:build :error-core:publishToMavenLocal :error-quarkus:publishToMavenLocal -Pgroup=com.github.incept5 -Pversion=$VERSION --stacktrace
+  # Use -PpublishGroupId to override the groupId for publications
+  - ./gradlew clean :error-core:build :error-quarkus:build :error-core:publishToMavenLocal :error-quarkus:publishToMavenLocal -Pgroup=com.github.incept5 -PpublishGroupId=com.github.incept5 -Pversion=$VERSION --stacktrace
   
   # Debug information
   - echo "Published artifacts to local Maven repository"
@@ -42,9 +43,9 @@ install:
       echo "Searching for error-core JAR:";
       find $HOME/.m2/repository -name "error-core-*.jar" | sort;
       
-      # Try one more publish with explicit version
+      # Try one more publish with explicit version and groupId
       echo "Attempting one more publish with explicit version $VERSION";
-      ./gradlew :error-core:clean :error-core:build :error-core:publishToMavenLocal -Pversion=$VERSION --stacktrace;
+      ./gradlew :error-core:clean :error-core:build :error-core:publishToMavenLocal -Pversion=$VERSION -PpublishGroupId=com.github.incept5 --stacktrace;
       
       # Check again
       if [ -f "$HOME/.m2/repository/com/github/incept5/error-core/$VERSION/error-core-$VERSION.jar" ]; then
@@ -72,9 +73,9 @@ install:
       echo "Searching for error-quarkus JAR:";
       find $HOME/.m2/repository -name "error-quarkus-*.jar" | sort;
       
-      # Try one more publish with explicit version
+      # Try one more publish with explicit version and groupId
       echo "Attempting one more publish with explicit version $VERSION";
-      ./gradlew :error-quarkus:clean :error-quarkus:build :error-quarkus:publishToMavenLocal -Pversion=$VERSION --stacktrace;
+      ./gradlew :error-quarkus:clean :error-quarkus:build :error-quarkus:publishToMavenLocal -Pversion=$VERSION -PpublishGroupId=com.github.incept5 --stacktrace;
       
       # Check again
       if [ -f "$HOME/.m2/repository/com/github/incept5/error-quarkus/$VERSION/error-quarkus-$VERSION.jar" ]; then
@@ -95,6 +96,16 @@ install:
       rm -f $HOME/.m2/repository/com/github/incept5/error-lib/$VERSION/error-lib-$VERSION*.pom;
     else
       echo "Verified: No error-lib parent JAR found (as expected)";
+    fi
+    
+  # Check and remove any artifacts with incorrect groupId
+  - if [ -d "$HOME/.m2/repository/com/github/incept5/error-lib" ]; then
+      echo "WARNING: Found artifacts with incorrect groupId (com.github.incept5.error-lib)";
+      echo "Removing artifacts with incorrect groupId to prevent them from being published";
+      rm -rf $HOME/.m2/repository/com/github/incept5/error-lib;
+      echo "Removed artifacts with incorrect groupId";
+    else
+      echo "Verified: No artifacts with incorrect groupId found";
     fi
     
   # Final verification

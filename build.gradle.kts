@@ -26,6 +26,10 @@ if (providedGroup != null && providedGroup.isNotEmpty()) {
     println("Using default group: $group")
 }
 
+// Check for publishGroupId which will be used for Maven publications
+val publishGroupId = project.properties["publishGroupId"]?.toString() ?: group.toString()
+println("Using publish group ID: $publishGroupId")
+
 // Print all project properties for debugging
 println("All project properties:")
 project.properties.forEach { (key, value) ->
@@ -37,10 +41,12 @@ project.properties.forEach { (key, value) ->
 // Print the final version and group
 println("Final version: $version")
 println("Final group: $group")
+println("Final publish group ID: $publishGroupId")
 
 // Log the final group and version for debugging
 println("Building with group: $group")
 println("Building with version: $version")
+println("Publishing with group ID: $publishGroupId")
 
 // Additional debug information
 println("System properties:")
@@ -93,10 +99,14 @@ subprojects {
     group = rootProject.group
     version = rootProject.version
     
+    // Get the publishGroupId from root project
+    val publishGroupId = rootProject.properties["publishGroupId"]?.toString() ?: rootProject.group.toString()
+    
     // Log subproject configuration
     println("Configuring subproject: ${project.name}")
     println("  Group: ${project.group}")
     println("  Version: ${project.version}")
+    println("  Publish GroupId: $publishGroupId")
     
     java {
         withJavadocJar()
@@ -119,7 +129,8 @@ subprojects {
         
         // Ensure all publications use the correct group and version
         publications.withType<MavenPublication>().configureEach {
-            groupId = project.group.toString()
+            // Use publishGroupId instead of project.group to ensure correct artifact path
+            groupId = publishGroupId
             version = project.version.toString()
             
             println("Configured publication for ${project.name}:")
@@ -134,7 +145,8 @@ subprojects {
         dependsOn("publishToMavenLocal")
         doLast {
             val projectVersion = project.version.toString()
-            val projectGroup = project.group.toString()
+            // Use publishGroupId for verification
+            val projectGroup = publishGroupId
             val artifactId = project.name
             val expectedPath = "${System.getProperty("user.home")}/.m2/repository/${projectGroup.replace(".", "/")}/$artifactId/$projectVersion/$artifactId-$projectVersion.jar"
             
@@ -168,9 +180,34 @@ subprojects {
 tasks.register("publishJitPackModules") {
     dependsOn(":error-core:publishToMavenLocal", ":error-quarkus:publishToMavenLocal")
     doLast {
+        val publishGroupId = project.properties["publishGroupId"]?.toString() ?: project.group.toString()
         println("Published JitPack modules:")
-        println("  com.github.incept5:error-core:${project.version}")
-        println("  com.github.incept5:error-quarkus:${project.version}")
+        println("  $publishGroupId:error-core:${project.version}")
+        println("  $publishGroupId:error-quarkus:${project.version}")
+        
+        // Verify the artifacts were published to the correct location
+        val homeDir = System.getProperty("user.home")
+        val expectedCorePath = "$homeDir/.m2/repository/${publishGroupId.replace(".", "/")}/error-core/${project.version}/error-core-${project.version}.jar"
+        val expectedQuarkusPath = "$homeDir/.m2/repository/${publishGroupId.replace(".", "/")}/error-quarkus/${project.version}/error-quarkus-${project.version}.jar"
+        
+        println("Verifying published artifacts:")
+        println("  Expected error-core path: $expectedCorePath")
+        println("  Expected error-quarkus path: $expectedQuarkusPath")
+        
+        val coreFile = file(expectedCorePath)
+        val quarkusFile = file(expectedQuarkusPath)
+        
+        if (coreFile.exists()) {
+            println("  ✅ error-core JAR exists at expected path")
+        } else {
+            println("  ❌ error-core JAR does not exist at expected path")
+        }
+        
+        if (quarkusFile.exists()) {
+            println("  ✅ error-quarkus JAR exists at expected path")
+        } else {
+            println("  ❌ error-quarkus JAR does not exist at expected path")
+        }
     }
 }
 
