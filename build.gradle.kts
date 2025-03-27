@@ -1,5 +1,6 @@
 // Set default version and group
-group = "com.github.incept5"  // Default group
+group = "com.github.incept5"  // Default group for local development
+// For JitPack, the group will be com.github.incept5
 
 // Determine the version to use
 val providedVersion = project.properties["version"]?.toString()
@@ -129,14 +130,33 @@ subprojects {
         
         // Ensure all publications use the correct group and version
         publications.withType<MavenPublication>().configureEach {
+            // For JitPack compatibility, we need to use the correct group ID format
+            // JitPack expects: com.github.{username}.{repository}
+            val jitpackGroupId = if (System.getenv("JITPACK") != null) {
+                // When building on JitPack
+                "com.github.incept5.error-lib"
+            } else {
+                // For local development
+                publishGroupId
+            }
+            
             // Use publishGroupId instead of project.group to ensure correct artifact path
-            groupId = publishGroupId
+            groupId = jitpackGroupId
             version = project.version.toString()
             
             println("Configured publication for ${project.name}:")
             println("  GroupId: $groupId")
             println("  ArtifactId: $artifactId")
             println("  Version: $version")
+            
+            // Add SCM information for JitPack
+            pom {
+                scm {
+                    connection.set("scm:git:github.com/incept5/error-lib.git")
+                    developerConnection.set("scm:git:ssh://github.com/incept5/error-lib.git")
+                    url.set("https://github.com/incept5/error-lib/tree/main")
+                }
+            }
         }
     }
     
@@ -211,16 +231,73 @@ tasks.register("publishJitPackModules") {
     }
 }
 
-// Skip publishing the root project
-tasks.withType<PublishToMavenRepository>().configureEach {
-    onlyIf {
-        project != rootProject
+// Configure root project publishing for JitPack
+publishing {
+    publications {
+        create<MavenPublication>("mavenRoot") {
+            // For JitPack compatibility
+            groupId = "com.github.incept5"
+            artifactId = "error-lib"
+            version = project.version.toString()
+            
+            // Create an empty JAR for the root project
+            artifact(tasks.register("emptyJar", Jar::class) {
+                archiveClassifier.set("empty")
+            })
+            
+            // POM information
+            pom {
+                name.set("Error Library")
+                description.set("Error handling library for Quarkus applications")
+                url.set("https://github.com/incept5/error-lib")
+                
+                licenses {
+                    license {
+                        name.set("The Apache License, Version 2.0")
+                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                    }
+                }
+                
+                developers {
+                    developer {
+                        id.set("incept5")
+                        name.set("Incept5")
+                        email.set("info@incept5.com")
+                    }
+                }
+                
+                scm {
+                    connection.set("scm:git:github.com/incept5/error-lib.git")
+                    developerConnection.set("scm:git:ssh://github.com/incept5/error-lib.git")
+                    url.set("https://github.com/incept5/error-lib/tree/main")
+                }
+                
+                // Define dependencies on the subprojects
+                withXml {
+                    val dependencies = asNode().appendNode("dependencies")
+                    
+                    project(":error-core").let { subproject ->
+                        val dependency = dependencies.appendNode("dependency")
+                        dependency.appendNode("groupId", "com.github.incept5.error-lib")
+                        dependency.appendNode("artifactId", "error-core")
+                        dependency.appendNode("version", project.version)
+                        dependency.appendNode("scope", "compile")
+                    }
+                    
+                    project(":error-quarkus").let { subproject ->
+                        val dependency = dependencies.appendNode("dependency")
+                        dependency.appendNode("groupId", "com.github.incept5.error-lib")
+                        dependency.appendNode("artifactId", "error-quarkus")
+                        dependency.appendNode("version", project.version)
+                        dependency.appendNode("scope", "compile")
+                    }
+                }
+            }
+        }
     }
-}
-
-tasks.withType<PublishToMavenLocal>().configureEach {
-    onlyIf {
-        project != rootProject
+    
+    repositories {
+        mavenLocal()
     }
 }
 

@@ -133,41 +133,69 @@ jobs:
             
             # Trigger JitPack build by making a request to the JitPack URL with the version tag
             echo "Triggering JitPack build for version ${VERSION}"
-            curl -s "https://jitpack.io/com/github/incept5/error-core/${VERSION}/error-core-${VERSION}.pom" || true
-            curl -s "https://jitpack.io/com/github/incept5/error-quarkus/${VERSION}/error-quarkus-${VERSION}.pom" || true
+            # Trigger the root project build on JitPack
+            curl -s "https://jitpack.io/com/github/incept5/error-lib/${VERSION}/error-lib-${VERSION}.pom" || true
             
             echo "JitPack build triggered for version ${VERSION}"
-            echo "Artifacts will be available at: https://jitpack.io/#com.github.incept5/error-core/${VERSION}"
-            echo "Artifacts will be available at: https://jitpack.io/#com.github.incept5/error-quarkus/${VERSION}"
+            echo "Root project will be available at: https://jitpack.io/#incept5/error-lib/${VERSION}"
+            echo "Modules will be available at:"
+            echo "- https://jitpack.io/#incept5/error-lib/error-core/${VERSION}"
+            echo "- https://jitpack.io/#incept5/error-lib/error-quarkus/${VERSION}"
             
             # Wait for JitPack to process the build
             echo "Waiting for JitPack to process the build..."
-            sleep 120
+            sleep 180  # Increased wait time to allow JitPack to process
             
-            # Verify the build status for error-core
-            CORE_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://jitpack.io/com/github/incept5/error-core/${VERSION}/error-core-${VERSION}.jar")
+            # Verify the build status for the root project
+            ROOT_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://jitpack.io/com/github/incept5/error-lib/${VERSION}/error-lib-${VERSION}.pom")
+            if [ "$ROOT_STATUS" -eq 200 ]; then
+              echo "Root project successfully published to JitPack!"
+            else
+              echo "Root project not found on JitPack. Status code: $ROOT_STATUS"
+              echo "Check status at: https://jitpack.io/#incept5/error-lib/${VERSION}"
+            fi
+            
+            # Verify the build status for error-core module
+            CORE_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://jitpack.io/com/github/incept5/error-lib/error-core/${VERSION}/error-core-${VERSION}.jar")
             if [ "$CORE_STATUS" -eq 200 ]; then
               echo "error-core artifact successfully published to JitPack!"
             else
               echo "error-core artifact not found on JitPack. Status code: $CORE_STATUS"
-              echo "Check status at: https://jitpack.io/#com.github.incept5/error-lib/${VERSION}"
+              echo "Check status at: https://jitpack.io/#incept5/error-lib/${VERSION}"
             fi
             
-            # Verify the build status for error-quarkus
-            QUARKUS_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://jitpack.io/com/github/incept5/error-quarkus/${VERSION}/error-quarkus-${VERSION}.jar")
+            # Verify the build status for error-quarkus module
+            QUARKUS_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://jitpack.io/com/github/incept5/error-lib/error-quarkus/${VERSION}/error-quarkus-${VERSION}.jar")
             if [ "$QUARKUS_STATUS" -eq 200 ]; then
               echo "error-quarkus artifact successfully published to JitPack!"
             else
               echo "error-quarkus artifact not found on JitPack. Status code: $QUARKUS_STATUS"
-              echo "Check status at: https://jitpack.io/#com.github.incept5/error-lib/${VERSION}"
+              echo "Check status at: https://jitpack.io/#incept5/error-lib/${VERSION}"
             fi
             
             # Final verification
-            if [ "$CORE_STATUS" -eq 200 ] && [ "$QUARKUS_STATUS" -eq 200 ]; then
-              echo "Both artifacts successfully published to JitPack!"
+            if [ "$ROOT_STATUS" -eq 200 ] && [ "$CORE_STATUS" -eq 200 ] && [ "$QUARKUS_STATUS" -eq 200 ]; then
+              echo "All artifacts successfully published to JitPack!"
             else
-              echo "WARNING: One or both artifacts may not be available yet on JitPack."
+              echo "WARNING: One or more artifacts may not be available yet on JitPack."
               echo "This is normal as JitPack may take some time to process the build."
+              echo ""
+              echo "To use these artifacts in your project:"
+              echo "1. Add the JitPack repository to your build file"
+              echo "   repositories {"
+              echo "     maven { url 'https://jitpack.io' }"
+              echo "   }"
+              echo ""
+              echo "2. Add the dependencies"
+              echo "   dependencies {"
+              echo "     implementation 'com.github.incept5.error-lib:error-core:${VERSION}'"
+              echo "     implementation 'com.github.incept5.error-lib:error-quarkus:${VERSION}'"
+              echo "   }"
+              echo ""
+              echo "3. Or use the root project (includes all modules)"
+              echo "   dependencies {"
+              echo "     implementation 'com.github.incept5:error-lib:${VERSION}'"
+              echo "   }"
             fi
 
 workflows:

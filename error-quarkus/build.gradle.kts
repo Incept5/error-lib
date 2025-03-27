@@ -35,10 +35,18 @@ dependencies {
 publishing {
     publications {
         create<MavenPublication>("maven") {
-            // Get the publishGroupId from root project or use default
-            val publishGroupId = rootProject.properties["publishGroupId"]?.toString() ?: "com.github.incept5"
+            // For JitPack compatibility, we need to use the correct group ID format
+            // JitPack expects: com.github.{username}.{repository}
+            val publishGroupId = rootProject.properties["publishGroupId"]?.toString() 
+                ?: if (System.getenv("JITPACK") != null) {
+                    // When building on JitPack
+                    "com.github.incept5.error-lib"
+                } else {
+                    // For local development
+                    "com.github.incept5"
+                }
             
-            // Explicitly set the coordinates for JitPack
+            // Explicitly set the coordinates
             groupId = publishGroupId
             artifactId = "error-quarkus"
             version = project.version.toString()
@@ -49,7 +57,7 @@ publishing {
             pom {
                 name.set("Error Quarkus")
                 description.set("Quarkus integration for Error Handling in Rest Services")
-                url.set("https://github.com/incept5/error-quarkus")
+                url.set("https://github.com/incept5/error-lib")
                 
                 licenses {
                     license {
@@ -64,6 +72,13 @@ publishing {
                         name.set("Incept5")
                         email.set("info@incept5.com")
                     }
+                }
+                
+                // Important for JitPack to resolve dependencies correctly
+                scm {
+                    connection.set("scm:git:github.com/incept5/error-lib.git")
+                    developerConnection.set("scm:git:ssh://github.com/incept5/error-lib.git")
+                    url.set("https://github.com/incept5/error-lib/tree/main")
                 }
             }
         }
