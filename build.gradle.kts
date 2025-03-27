@@ -164,3 +164,26 @@ subprojects {
     }
 }
 
+// Add a task to publish only the modules we want to JitPack
+tasks.register("publishJitPackModules") {
+    dependsOn(":error-core:publishToMavenLocal", ":error-quarkus:publishToMavenLocal")
+    doLast {
+        println("Published JitPack modules:")
+        println("  com.github.incept5:error-core:${project.version}")
+        println("  com.github.incept5:error-quarkus:${project.version}")
+    }
+}
+
+// Skip publishing the root project
+tasks.withType<PublishToMavenRepository>().configureEach {
+    onlyIf {
+        project != rootProject
+    }
+}
+
+tasks.withType<PublishToMavenLocal>().configureEach {
+    onlyIf {
+        project != rootProject
+    }
+}
+

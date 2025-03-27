@@ -15,8 +15,8 @@ install:
     fi
   - echo "Building version $VERSION"
   
-  # Build and publish with explicit version
-  - ./gradlew clean build publishToMavenLocal -Pgroup=com.github.incept5 -Pversion=$VERSION --stacktrace
+  # Build and publish with explicit version - only the modules we want
+  - ./gradlew clean build publishJitPackModules -Pgroup=com.github.incept5 -Pversion=$VERSION --stacktrace
   
   # Debug information
   - echo "Published artifacts to local Maven repository"

@@ -31,7 +31,7 @@ tasks.test {
 publishing {
     publications {
         create<MavenPublication>("maven") {
-            groupId = project.group.toString()
+            groupId = "com.github.incept5"
             artifactId = "error-core"
             version = project.version.toString()
             

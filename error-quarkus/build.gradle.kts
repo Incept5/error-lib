@@ -35,7 +35,7 @@ dependencies {
 publishing {
     publications {
         create<MavenPublication>("maven") {
-            groupId = project.group.toString()
+            groupId = "com.github.incept5"
             artifactId = "error-quarkus"
             version = project.version.toString()
             
