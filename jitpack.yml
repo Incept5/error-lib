@@ -1,117 +1,117 @@
 jdk:
   - openjdk21
-before_install:
-  - ./gradlew clean
-
-install:
-  # Extract version from git tag (JitPack sets the version based on the git tag)
-  - if [ -n "$VERSION" ]; then
-      echo "Using provided version from JitPack: $VERSION";
-    elif [ -n "$(git tag --points-at HEAD)" ]; then
-      VERSION=$(git describe --tags --abbrev=0 | sed 's/^v//');
-      echo "Using git tag version: $VERSION";
-    else
-      VERSION=$(git rev-parse --short HEAD);
-      echo "Using commit hash as version: $VERSION";
-    fi
-  - echo "Building version $VERSION"
-  
-  # Build and publish with explicit version - only the modules we want
-  # Use -PpublishGroupId to override the groupId for publications
-  - ./gradlew clean :error-core:build :error-quarkus:build :error-core:publishToMavenLocal :error-quarkus:publishToMavenLocal -Pgroup=com.github.incept5 -PpublishGroupId=com.github.incept5 -Pversion=$VERSION --stacktrace
-  
-  # Debug information
-  - echo "Published artifacts to local Maven repository"
-  - echo "Maven repository location: $HOME/.m2/repository"
-  
-  # List all artifacts in the Maven repository
-  - echo "All artifacts in Maven repository:"
-  - find $HOME/.m2/repository/com/github/incept5 -type f -name "*.jar" | sort
-  
-  # Verify error-core JAR
-  - if [ ! -f $HOME/.m2/repository/com/github/incept5/error-core/$VERSION/error-core-$VERSION.jar ]; then
-      echo "ERROR: error-core JAR not found at expected path";
-      echo "Expected: $HOME/.m2/repository/com/github/incept5/error-core/$VERSION/error-core-$VERSION.jar";
-      
-      # Check if the directory exists
-      if [ -d "$HOME/.m2/repository/com/github/incept5/error-core" ]; then
-        echo "Available versions for error-core:";
-        ls -la "$HOME/.m2/repository/com/github/incept5/error-core/";
-      fi;
-      
-      # Try to find it elsewhere
-      echo "Searching for error-core JAR:";
-      find $HOME/.m2/repository -name "error-core-*.jar" | sort;
-      
-      # Try one more publish with explicit version and groupId
-      echo "Attempting one more publish with explicit version $VERSION";
-      ./gradlew :error-core:clean :error-core:build :error-core:publishToMavenLocal -Pversion=$VERSION -PpublishGroupId=com.github.incept5 --stacktrace;
-      
-      # Check again
-      if [ -f "$HOME/.m2/repository/com/github/incept5/error-core/$VERSION/error-core-$VERSION.jar" ]; then
-        echo "Successfully published error-core JAR after retry";
-      else
-        echo "Failed to publish error-core JAR after retry";
-        exit 1;
-      fi;
-    else
-      echo "Found error-core JAR at $HOME/.m2/repository/com/github/incept5/error-core/$VERSION/error-core-$VERSION.jar";
-    fi
-  
-  # Verify error-quarkus JAR
-  - if [ ! -f $HOME/.m2/repository/com/github/incept5/error-quarkus/$VERSION/error-quarkus-$VERSION.jar ]; then
-      echo "ERROR: error-quarkus JAR not found at expected path";
-      echo "Expected: $HOME/.m2/repository/com/github/incept5/error-quarkus/$VERSION/error-quarkus-$VERSION.jar";
-      
-      # Check if the directory exists
-      if [ -d "$HOME/.m2/repository/com/github/incept5/error-quarkus" ]; then
-        echo "Available versions for error-quarkus:";
-        ls -la "$HOME/.m2/repository/com/github/incept5/error-quarkus/";
-      fi;
-      
-      # Try to find it elsewhere
-      echo "Searching for error-quarkus JAR:";
-      find $HOME/.m2/repository -name "error-quarkus-*.jar" | sort;
-      
-      # Try one more publish with explicit version and groupId
-      echo "Attempting one more publish with explicit version $VERSION";
-      ./gradlew :error-quarkus:clean :error-quarkus:build :error-quarkus:publishToMavenLocal -Pversion=$VERSION -PpublishGroupId=com.github.incept5 --stacktrace;
-      
-      # Check again
-      if [ -f "$HOME/.m2/repository/com/github/incept5/error-quarkus/$VERSION/error-quarkus-$VERSION.jar" ]; then
-        echo "Successfully published error-quarkus JAR after retry";
-      else
-        echo "Failed to publish error-quarkus JAR after retry";
-        exit 1;
-      fi;
-    else
-      echo "Found error-quarkus JAR at $HOME/.m2/repository/com/github/incept5/error-quarkus/$VERSION/error-quarkus-$VERSION.jar";
-    fi
-    
-  # Ensure the parent artifact is not published
-  - if [ -f $HOME/.m2/repository/com/github/incept5/error-lib/$VERSION/error-lib-$VERSION.jar ]; then
-      echo "WARNING: Found error-lib parent JAR, which should not be published";
-      echo "Removing error-lib parent JAR to prevent it from being published";
-      rm -f $HOME/.m2/repository/com/github/incept5/error-lib/$VERSION/error-lib-$VERSION*.jar;
-      rm -f $HOME/.m2/repository/com/github/incept5/error-lib/$VERSION/error-lib-$VERSION*.pom;
-    else
-      echo "Verified: No error-lib parent JAR found (as expected)";
-    fi
-    
-  # Check and remove any artifacts with incorrect groupId
-  - if [ -d "$HOME/.m2/repository/com/github/incept5/error-lib" ]; then
-      echo "WARNING: Found artifacts with incorrect groupId (com.github.incept5.error-lib)";
-      echo "Removing artifacts with incorrect groupId to prevent them from being published";
-      rm -rf $HOME/.m2/repository/com/github/incept5/error-lib;
-      echo "Removed artifacts with incorrect groupId";
-    else
-      echo "Verified: No artifacts with incorrect groupId found";
-    fi
-    
-  # Final verification
-  - echo "Final verification of published artifacts:"
-  - echo "Expected artifacts:"
-  - echo "  com.github.incept5:error-core:$VERSION"
-  - echo "  com.github.incept5:error-quarkus:$VERSION"
-  - echo "Actual artifacts in Maven repository:"
-  - find $HOME/.m2/repository/com/github/incept5 -type f -name "*.jar" | sort
+#before_install:
+#  - ./gradlew clean
+#
+#install:
+#  # Extract version from git tag (JitPack sets the version based on the git tag)
+#  - if [ -n "$VERSION" ]; then
+#      echo "Using provided version from JitPack: $VERSION";
+#    elif [ -n "$(git tag --points-at HEAD)" ]; then
+#      VERSION=$(git describe --tags --abbrev=0 | sed 's/^v//');
+#      echo "Using git tag version: $VERSION";
+#    else
+#      VERSION=$(git rev-parse --short HEAD);
+#      echo "Using commit hash as version: $VERSION";
+#    fi
+#  - echo "Building version $VERSION"
+#
+#  # Build and publish with explicit version - only the modules we want
+#  # Use -PpublishGroupId to override the groupId for publications
+#  - ./gradlew clean :error-core:build :error-quarkus:build :error-core:publishToMavenLocal :error-quarkus:publishToMavenLocal -Pgroup=com.github.incept5 -PpublishGroupId=com.github.incept5 -Pversion=$VERSION --stacktrace
+#
+#  # Debug information
+#  - echo "Published artifacts to local Maven repository"
+#  - echo "Maven repository location: $HOME/.m2/repository"
+#
+#  # List all artifacts in the Maven repository
+#  - echo "All artifacts in Maven repository:"
+#  - find $HOME/.m2/repository/com/github/incept5 -type f -name "*.jar" | sort
+#
+#  # Verify error-core JAR
+#  - if [ ! -f $HOME/.m2/repository/com/github/incept5/error-core/$VERSION/error-core-$VERSION.jar ]; then
+#      echo "ERROR: error-core JAR not found at expected path";
+#      echo "Expected: $HOME/.m2/repository/com/github/incept5/error-core/$VERSION/error-core-$VERSION.jar";
+#
+#      # Check if the directory exists
+#      if [ -d "$HOME/.m2/repository/com/github/incept5/error-core" ]; then
+#        echo "Available versions for error-core:";
+#        ls -la "$HOME/.m2/repository/com/github/incept5/error-core/";
+#      fi;
+#
+#      # Try to find it elsewhere
+#      echo "Searching for error-core JAR:";
+#      find $HOME/.m2/repository -name "error-core-*.jar" | sort;
+#
+#      # Try one more publish with explicit version and groupId
+#      echo "Attempting one more publish with explicit version $VERSION";
+#      ./gradlew :error-core:clean :error-core:build :error-core:publishToMavenLocal -Pversion=$VERSION -PpublishGroupId=com.github.incept5 --stacktrace;
+#
+#      # Check again
+#      if [ -f "$HOME/.m2/repository/com/github/incept5/error-core/$VERSION/error-core-$VERSION.jar" ]; then
+#        echo "Successfully published error-core JAR after retry";
+#      else
+#        echo "Failed to publish error-core JAR after retry";
+#        exit 1;
+#      fi;
+#    else
+#      echo "Found error-core JAR at $HOME/.m2/repository/com/github/incept5/error-core/$VERSION/error-core-$VERSION.jar";
+#    fi
+#
+#  # Verify error-quarkus JAR
+#  - if [ ! -f $HOME/.m2/repository/com/github/incept5/error-quarkus/$VERSION/error-quarkus-$VERSION.jar ]; then
+#      echo "ERROR: error-quarkus JAR not found at expected path";
+#      echo "Expected: $HOME/.m2/repository/com/github/incept5/error-quarkus/$VERSION/error-quarkus-$VERSION.jar";
+#
+#      # Check if the directory exists
+#      if [ -d "$HOME/.m2/repository/com/github/incept5/error-quarkus" ]; then
+#        echo "Available versions for error-quarkus:";
+#        ls -la "$HOME/.m2/repository/com/github/incept5/error-quarkus/";
+#      fi;
+#
+#      # Try to find it elsewhere
+#      echo "Searching for error-quarkus JAR:";
+#      find $HOME/.m2/repository -name "error-quarkus-*.jar" | sort;
+#
+#      # Try one more publish with explicit version and groupId
+#      echo "Attempting one more publish with explicit version $VERSION";
+#      ./gradlew :error-quarkus:clean :error-quarkus:build :error-quarkus:publishToMavenLocal -Pversion=$VERSION -PpublishGroupId=com.github.incept5 --stacktrace;
+#
+#      # Check again
+#      if [ -f "$HOME/.m2/repository/com/github/incept5/error-quarkus/$VERSION/error-quarkus-$VERSION.jar" ]; then
+#        echo "Successfully published error-quarkus JAR after retry";
+#      else
+#        echo "Failed to publish error-quarkus JAR after retry";
+#        exit 1;
+#      fi;
+#    else
+#      echo "Found error-quarkus JAR at $HOME/.m2/repository/com/github/incept5/error-quarkus/$VERSION/error-quarkus-$VERSION.jar";
+#    fi
+#
+#  # Ensure the parent artifact is not published
+#  - if [ -f $HOME/.m2/repository/com/github/incept5/error-lib/$VERSION/error-lib-$VERSION.jar ]; then
+#      echo "WARNING: Found error-lib parent JAR, which should not be published";
+#      echo "Removing error-lib parent JAR to prevent it from being published";
+#      rm -f $HOME/.m2/repository/com/github/incept5/error-lib/$VERSION/error-lib-$VERSION*.jar;
+#      rm -f $HOME/.m2/repository/com/github/incept5/error-lib/$VERSION/error-lib-$VERSION*.pom;
+#    else
+#      echo "Verified: No error-lib parent JAR found (as expected)";
+#    fi
+#
+#  # Check and remove any artifacts with incorrect groupId
+#  - if [ -d "$HOME/.m2/repository/com/github/incept5/error-lib" ]; then
+#      echo "WARNING: Found artifacts with incorrect groupId (com.github.incept5.error-lib)";
+#      echo "Removing artifacts with incorrect groupId to prevent them from being published";
+#      rm -rf $HOME/.m2/repository/com/github/incept5/error-lib;
+#      echo "Removed artifacts with incorrect groupId";
+#    else
+#      echo "Verified: No artifacts with incorrect groupId found";
+#    fi
+#
+#  # Final verification
+#  - echo "Final verification of published artifacts:"
+#  - echo "Expected artifacts:"
+#  - echo "  com.github.incept5:error-core:$VERSION"
+#  - echo "  com.github.incept5:error-quarkus:$VERSION"
+#  - echo "Actual artifacts in Maven repository:"
+#  - find $HOME/.m2/repository/com/github/incept5 -type f -name "*.jar" | sort

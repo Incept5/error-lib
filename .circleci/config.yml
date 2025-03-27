@@ -133,10 +133,12 @@ jobs:
             
             # Trigger JitPack build by making a request to the JitPack URL with the version tag
             echo "Triggering JitPack build for version ${VERSION}"
-            curl -s "https://jitpack.io/com/github/incept5/error-lib/${VERSION}/error-lib-${VERSION}.pom" || true
+            curl -s "https://jitpack.io/com/github/incept5/error-core/${VERSION}/error-core-${VERSION}.pom" || true
+            curl -s "https://jitpack.io/com/github/incept5/error-quarkus/${VERSION}/error-quarkus-${VERSION}.pom" || true
             
             echo "JitPack build triggered for version ${VERSION}"
-            echo "Artifacts will be available at: https://jitpack.io/#com.github.incept5/error-lib/${VERSION}"
+            echo "Artifacts will be available at: https://jitpack.io/#com.github.incept5/error-core/${VERSION}"
+            echo "Artifacts will be available at: https://jitpack.io/#com.github.incept5/error-quarkus/${VERSION}"
             
             # Wait for JitPack to process the build
             echo "Waiting for JitPack to process the build..."
