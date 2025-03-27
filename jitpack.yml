@@ -2,9 +2,7 @@ jdk:
   - openjdk21
 before_install:
   - ./gradlew clean
-  # Create a custom settings.xml to ensure JitPack uses our artifacts correctly
-  - mkdir -p ~/.m2
-  - echo "<settings><servers><server><id>jitpack.io</id><username>jitpack</username><password>jitpack</password></server></servers></settings>" > ~/.m2/settings.xml
+
 install:
   # Extract version from git tag (JitPack sets the version based on the git tag)
   - if [ -n "$VERSION" ]; then
