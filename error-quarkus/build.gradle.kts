@@ -12,6 +12,7 @@ plugins {
 dependencies {
     implementation(platform(libs.quarkus.bom))
 
+    // Use api configuration to expose error-core as a transitive dependency
     api(project(":error-core"))
     api("io.vertx:vertx-core")
     api("io.quarkus:quarkus-resteasy-reactive")
@@ -51,6 +52,8 @@ publishing {
             artifactId = "error-quarkus"
             version = project.version.toString()
             
+            // This will include all dependencies marked as 'api' as transitive dependencies
+            // The 'api' configuration automatically makes dependencies transitive
             from(components["java"])
             
             // POM information

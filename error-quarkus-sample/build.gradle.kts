@@ -15,9 +15,11 @@ dependencies {
     implementation("io.quarkus:quarkus-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
-    implementation(project(":error-core"))
+    // No need to explicitly include error-core as it will be transitively included via error-quarkus
+    // implementation(project(":error-core"))
 
-    runtimeOnly(project(":error-quarkus"))
+    // Using implementation instead of runtimeOnly to demonstrate transitive dependency
+    implementation(project(":error-quarkus"))
     implementation("io.quarkus:quarkus-resteasy-reactive-jackson")
     implementation("io.quarkus:quarkus-resteasy-reactive")
     runtimeOnly("io.quarkus:quarkus-hibernate-validator")
