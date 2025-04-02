@@ -27,7 +27,7 @@ open class RestErrorHandler {
     }
 
     /**
-     * This is the main handler for all Velostone exceptions
+     * This is the main handler for all CoreException exceptions
      * We convert some others into these below in the handler
      */
     @ServerExceptionMapper
