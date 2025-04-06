@@ -20,8 +20,8 @@ dependencies {
 
     // Using implementation instead of runtimeOnly to demonstrate transitive dependency
     implementation(project(":error-quarkus"))
-    implementation("io.quarkus:quarkus-resteasy-reactive-jackson")
-    implementation("io.quarkus:quarkus-resteasy-reactive")
+    implementation(libs.quarkus.rest.jackson)
+
     runtimeOnly("io.quarkus:quarkus-hibernate-validator")
     runtimeOnly("io.quarkus:quarkus-arc")
 

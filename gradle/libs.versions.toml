@@ -12,7 +12,7 @@ ktlint = "12.1.2"
 mockk = "1.13.17"
 mockito = "5.16.0"
 mockito-kotlin = "5.4.0"
-quarkus = "3.8.6"
+quarkus = "3.21.1"
 #test-logger = "4.0.0"
 versions = "0.11.1"
 dependency-analysis = "2.13.0"
@@ -65,6 +65,7 @@ mockk-dsl = { group = "io.mockk", name = "mockk-dsl", version.ref = "mockk" }
 
 # quarkus
 quarkus-bom = { group = "io.quarkus.platform", name = "quarkus-bom", version.ref = "quarkus" }
+quarkus-rest-jackson = {module = "io.quarkus:quarkus-rest-jackson", version.ref = "quarkus" }
 
 # kotest
 kotest-bom = { module = "io.kotest:kotest-bom", version.ref = "kotest" }

@@ -15,14 +15,13 @@ dependencies {
     // Use api configuration to expose error-core as a transitive dependency
     api(project(":error-core"))
     api("io.vertx:vertx-core")
-    api("io.quarkus:quarkus-resteasy-reactive")
     api("jakarta.enterprise:jakarta.enterprise.cdi-api")
     api("jakarta.validation:jakarta.validation-api")
     api("jakarta.ws.rs:jakarta.ws.rs-api")
 
     implementation(libs.incept5.correlation)
     implementation("io.quarkus:quarkus-kotlin")
-    implementation("io.quarkus:quarkus-resteasy-reactive-jackson")
+    implementation(libs.quarkus.rest.jackson)
     runtimeOnly("io.quarkus:quarkus-arc")
 
     testImplementation(platform(libs.kotest.bom))
