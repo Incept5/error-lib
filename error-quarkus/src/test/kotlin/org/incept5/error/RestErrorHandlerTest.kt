@@ -15,6 +15,8 @@ import jakarta.ws.rs.NotAcceptableException
 import jakarta.ws.rs.NotAllowedException
 import jakarta.ws.rs.NotFoundException
 import jakarta.ws.rs.NotSupportedException
+import jakarta.ws.rs.WebApplicationException
+import com.fasterxml.jackson.databind.JsonMappingException
 
 class RestErrorHandlerTest : StringSpec({
 
@@ -213,6 +215,76 @@ class RestErrorHandlerTest : StringSpec({
         ageError shouldNotBe null
         ageError!!.message shouldBe "must be greater than 0"
         ageError.code shouldBe "VALIDATION"
+    }
+
+    "handleWebApplicationException should extract field path from JsonMappingException" {
+        // Arrange
+        val jsonMappingException = mockk<JsonMappingException>()
+        val reference1 = mockk<JsonMappingException.Reference>()
+        val reference2 = mockk<JsonMappingException.Reference>()
+        val path = listOf(reference1, reference2)
+        
+        // Configure mocks for field path
+        every { reference1.fieldName } returns "user"
+        every { reference1.index } returns -1
+        every { reference2.fieldName } returns "email"
+        every { reference2.index } returns -1
+        every { jsonMappingException.path } returns path
+        
+        val webAppException = mockk<WebApplicationException>()
+        every { webAppException.message } returns "Invalid JSON format"
+        every { webAppException.cause } returns jsonMappingException
+        
+        val handler = RestErrorHandler()
+
+        // Act
+        val response = handler.handleWebApplicationException(mockRequest, webAppException)
+
+        // Assert
+        response.status shouldBe 400
+        val commonErrorResponse = response.entity as CommonErrorResponse
+        commonErrorResponse.correlationId shouldNotBe null
+        commonErrorResponse.httpStatusCode shouldBe 400
+
+        val commonError = commonErrorResponse.errors.first()
+        commonError.message shouldBe "Invalid JSON format"
+        commonError.code shouldBe "VALIDATION"
+        commonError.location shouldBe "user.email"
+    }
+
+    "handleWebApplicationException should handle JsonMappingException with array index" {
+        // Arrange
+        val jsonMappingException = mockk<JsonMappingException>()
+        val reference1 = mockk<JsonMappingException.Reference>()
+        val reference2 = mockk<JsonMappingException.Reference>()
+        val path = listOf(reference1, reference2)
+        
+        // Configure mocks for array index path
+        every { reference1.fieldName } returns "items"
+        every { reference1.index } returns -1
+        every { reference2.fieldName } returns null
+        every { reference2.index } returns 2
+        every { jsonMappingException.path } returns path
+        
+        val webAppException = mockk<WebApplicationException>()
+        every { webAppException.message } returns null
+        every { webAppException.cause } returns jsonMappingException
+        
+        val handler = RestErrorHandler()
+
+        // Act
+        val response = handler.handleWebApplicationException(mockRequest, webAppException)
+
+        // Assert
+        response.status shouldBe 400
+        val commonErrorResponse = response.entity as CommonErrorResponse
+        commonErrorResponse.correlationId shouldNotBe null
+        commonErrorResponse.httpStatusCode shouldBe 400
+
+        val commonError = commonErrorResponse.errors.first()
+        commonError.message shouldBe "JSON mapping error"
+        commonError.code shouldBe "VALIDATION"
+        commonError.location shouldBe "items.[2]"
     }
 
 })

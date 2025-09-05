@@ -1,5 +1,6 @@
 package org.incept5.error
 
+import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.quarkus.logging.Log
 import io.vertx.core.http.HttpServerRequest
@@ -116,11 +117,28 @@ open class RestErrorHandler {
         Log.debug("WebApplicationException: ${exp.message}")
         Log.debug("Cause: ${exp.cause?.javaClass?.name}: ${exp.cause?.message}")
         
-        // For JSON parsing errors, we need to preserve the original error message
-        // The message should already be set correctly in the CustomReaderInterceptor
-        val errorMessage = exp.message ?: "Web Application Exception"
-        
-        return handleCoreException(req, toCoreException(ErrorCategory.VALIDATION, exp, errorMessage))
+        // For JSON parsing errors, extract field path from JsonMappingException
+        return when (val cause = exp.cause) {
+            is JsonMappingException -> {
+                val fieldPath = cause.path.joinToString(".") { it.fieldName ?: "[${it.index}]" }
+                val errorMessage = exp.message ?: "JSON mapping error"
+                val errors = listOf(CommonError(errorMessage, "VALIDATION", fieldPath))
+                Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity(
+                        CommonErrorResponse(
+                            errors,
+                            CorrelationId.getId(),
+                            Response.Status.BAD_REQUEST.statusCode,
+                        ),
+                    )
+                    .build()
+            }
+            else -> {
+                val errorMessage = exp.message ?: "Web Application Exception"
+                handleCoreException(req, toCoreException(ErrorCategory.VALIDATION, exp, errorMessage))
+            }
+        }
     }
 
     @ServerExceptionMapper
@@ -218,6 +236,7 @@ open class RestErrorHandler {
         msg,
         exp,
     )
+
 
     /**
      * Maps the ErrorCategory to the appropriate HTTP status code.
