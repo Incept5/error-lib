@@ -176,7 +176,7 @@ class RestErrorHandlerTest : StringSpec({
         val violation2 = mockk<ConstraintViolation<*>>()
         val path1 = mockk<Path>()
         val path2 = mockk<Path>()
-        
+
         // Configure mocks
         every { violations.iterator() } returns listOf(violation1, violation2).iterator()
         every { violations.size } returns 2
@@ -186,11 +186,11 @@ class RestErrorHandlerTest : StringSpec({
         every { violation2.propertyPath } returns path2
         every { path1.toString() } returns "name"
         every { path2.toString() } returns "age"
-        
+
         val exp = mockk<ConstraintViolationException>()
         every { exp.message } returns "Validation failed"
         every { exp.constraintViolations } returns violations
-        
+
         val handler = RestErrorHandler()
 
         // Act
@@ -204,13 +204,13 @@ class RestErrorHandlerTest : StringSpec({
 
         // Should have two errors
         commonErrorResponse.errors.size shouldBe 2
-        
+
         // Verify errors are present with correct values
         val nameError = commonErrorResponse.errors.find { it.location == "name" }
         nameError shouldNotBe null
         nameError!!.message shouldBe "must not be blank"
         nameError.code shouldBe "VALIDATION"
-        
+
         val ageError = commonErrorResponse.errors.find { it.location == "age" }
         ageError shouldNotBe null
         ageError!!.message shouldBe "must be greater than 0"
@@ -219,22 +219,23 @@ class RestErrorHandlerTest : StringSpec({
 
     "handleWebApplicationException should extract field path from JsonMappingException" {
         // Arrange
-        val jsonMappingException = mockk<JsonMappingException>()
-        val reference1 = mockk<JsonMappingException.Reference>()
-        val reference2 = mockk<JsonMappingException.Reference>()
+        val jsonMappingException = mockk<JsonMappingException>(relaxed = true)
+        val reference1 = mockk<JsonMappingException.Reference>(relaxed = true)
+        val reference2 = mockk<JsonMappingException.Reference>(relaxed = true)
         val path = listOf(reference1, reference2)
-        
+
         // Configure mocks for field path
         every { reference1.fieldName } returns "user"
         every { reference1.index } returns -1
         every { reference2.fieldName } returns "email"
         every { reference2.index } returns -1
         every { jsonMappingException.path } returns path
-        
-        val webAppException = mockk<WebApplicationException>()
+        every { jsonMappingException.message } returns "JSON parse error"
+
+        val webAppException = mockk<WebApplicationException>(relaxed = true)
         every { webAppException.message } returns "Invalid JSON format"
         every { webAppException.cause } returns jsonMappingException
-        
+
         val handler = RestErrorHandler()
 
         // Act
@@ -254,22 +255,23 @@ class RestErrorHandlerTest : StringSpec({
 
     "handleWebApplicationException should handle JsonMappingException with array index" {
         // Arrange
-        val jsonMappingException = mockk<JsonMappingException>()
-        val reference1 = mockk<JsonMappingException.Reference>()
-        val reference2 = mockk<JsonMappingException.Reference>()
+        val jsonMappingException = mockk<JsonMappingException>(relaxed = true)
+        val reference1 = mockk<JsonMappingException.Reference>(relaxed = true)
+        val reference2 = mockk<JsonMappingException.Reference>(relaxed = true)
         val path = listOf(reference1, reference2)
-        
+
         // Configure mocks for array index path
         every { reference1.fieldName } returns "items"
         every { reference1.index } returns -1
         every { reference2.fieldName } returns null
         every { reference2.index } returns 2
         every { jsonMappingException.path } returns path
-        
-        val webAppException = mockk<WebApplicationException>()
+        every { jsonMappingException.message } returns "Array parse error"
+
+        val webAppException = mockk<WebApplicationException>(relaxed = true)
         every { webAppException.message } returns null
         every { webAppException.cause } returns jsonMappingException
-        
+
         val handler = RestErrorHandler()
 
         // Act
