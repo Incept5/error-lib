@@ -30,6 +30,8 @@ dependencies {
     testImplementation("io.kotest:kotest-framework-api")
     testImplementation(libs.mockk)
     testImplementation(libs.mockk.dsl)
+    testImplementation("io.quarkus:quarkus-junit5")
+    testImplementation("io.rest-assured:rest-assured")
 }
 
 publishing {

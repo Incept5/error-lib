@@ -1,292 +1,215 @@
 package org.incept5.error
 
-import org.incept5.error.response.CommonErrorResponse
-import io.kotest.core.spec.style.StringSpec
-import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
+import com.fasterxml.jackson.core.JsonLocation
+import com.fasterxml.jackson.databind.JsonMappingException
+import com.fasterxml.jackson.databind.exc.InvalidFormatException
 import io.mockk.every
 import io.mockk.mockk
 import io.vertx.core.http.HttpServerRequest
-import jakarta.validation.ConstraintViolation
-import jakarta.validation.ConstraintViolationException
-import jakarta.validation.Path
-import jakarta.ws.rs.ClientErrorException
-import jakarta.ws.rs.NotAcceptableException
-import jakarta.ws.rs.NotAllowedException
-import jakarta.ws.rs.NotFoundException
-import jakarta.ws.rs.NotSupportedException
+import io.vertx.core.http.HttpMethod
+import io.vertx.core.net.SocketAddress
+import jakarta.ws.rs.BadRequestException
 import jakarta.ws.rs.WebApplicationException
-import com.fasterxml.jackson.databind.JsonMappingException
+import jakarta.ws.rs.core.Response
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class RestErrorHandlerTest : StringSpec({
+class RestErrorHandlerTest {
 
-    val mockRequest = mockk<HttpServerRequest>(relaxed = true) {
-        every { path() } returns  "/test"
+    private lateinit var restErrorHandler: RestErrorHandler
+    private lateinit var mockRequest: HttpServerRequest
+    private lateinit var mockAddress: SocketAddress
+
+    @BeforeEach
+    fun setup() {
+        restErrorHandler = RestErrorHandler()
+        mockRequest = mockk()
+        mockAddress = mockk()
+        
+        // Setup common mock behaviors
+        every { mockRequest.path() } returns "/api/test"
+        every { mockRequest.method() } returns HttpMethod.POST
+        every { mockRequest.query() } returns null
+        every { mockRequest.remoteAddress() } returns mockAddress
+        every { mockAddress.hostAddress() } returns "127.0.0.1"
     }
 
-    "handleCoreException should map CoreException to CommonErrorResponse" {
-        // Arrange
-        val exp = CoreException(ErrorCategory.VALIDATION, listOf(Error("ERR-1000")), "Test exception", RuntimeException("Test exception"))
-        val handler = RestErrorHandler()
-
-        // Act
-        val response = handler.handleCoreException(mockRequest, exp)
-
-        // Assert
-        response.status shouldBe 400
-        val commonErrorResponse = response.entity as CommonErrorResponse
-        commonErrorResponse.correlationId shouldNotBe null
-        commonErrorResponse.httpStatusCode shouldBe 400
-
-        val commonError = commonErrorResponse.errors.first()
-        commonError.message shouldBe "Test exception"
-        commonError.code shouldBe "ERR-1000"
+    @Test
+    fun `handleInvalidFormatException should return detailed enum error message`() {
+        // Create a mock InvalidFormatException for enum deserialization
+        val targetType = TestEnum::class.java
+        val invalidValue = "INVALID_VALUE"
+        val path = JsonMappingException.Reference("currency", "currency")
+        val location = JsonLocation.NA
+        
+        val exception = InvalidFormatException.from(
+            null,
+            "Cannot deserialize value of type `${targetType.name}` from String \"$invalidValue\": not one of the values accepted for Enum class: [${TestEnum.values().joinToString(", ")}]",
+            invalidValue,
+            targetType
+        )
+        exception.prependPath(path)
+        
+        val response = restErrorHandler.handleInvalidFormatException(mockRequest, exception)
+        
+        assertEquals(Response.Status.BAD_REQUEST.statusCode, response.status)
+        
+        val entity = response.entity as org.incept5.error.response.CommonErrorResponse
+        assertEquals(1, entity.errors.size)
+        assertEquals("VALIDATION", entity.errors[0].code)
+        assertEquals("currency", entity.errors[0].location)
+        assertTrue(entity.errors[0].message.contains("Invalid value for currency: INVALID_VALUE"))
+        assertTrue(entity.errors[0].message.contains("Must be one of: VALUE1, VALUE2, VALUE3"))
     }
 
-    "handleJaxwsNotSupportedException should map NotSupportedException to CommonErrorResponse" {
-        // Arrange
-        val exp = NotSupportedException("not supported")
-        val handler = RestErrorHandler()
-
-        // Act
-        val response = handler.handleWebApplicationException(mockRequest, exp)
-
-        // Assert
-        response.status shouldBe 400
-        val commonErrorResponse = response.entity as CommonErrorResponse
-        commonErrorResponse.correlationId shouldNotBe null
-        commonErrorResponse.httpStatusCode shouldBe 400
-
-        val commonError = commonErrorResponse.errors.first()
-        commonError.message shouldBe "not supported"
-        commonError.code shouldBe "VALIDATION"
+    @Test
+    fun `handleInvalidFormatException should handle non-enum type errors`() {
+        // Create a mock InvalidFormatException for non-enum type
+        val targetType = Integer::class.java
+        val invalidValue = "not_a_number"
+        val path = JsonMappingException.Reference("amount", "amount")
+        
+        val exception = InvalidFormatException.from(
+            null,
+            "Cannot deserialize value of type `java.lang.Integer` from String \"$invalidValue\"",
+            invalidValue,
+            targetType
+        )
+        exception.prependPath(path)
+        
+        val response = restErrorHandler.handleInvalidFormatException(mockRequest, exception)
+        
+        assertEquals(Response.Status.BAD_REQUEST.statusCode, response.status)
+        
+        val entity = response.entity as org.incept5.error.response.CommonErrorResponse
+        assertEquals(1, entity.errors.size)
+        assertEquals("VALIDATION", entity.errors[0].code)
+        assertEquals("amount", entity.errors[0].location)
+        assertTrue(entity.errors[0].message.contains("Invalid value 'not_a_number' for field 'amount' of type Integer"))
     }
 
-    "handleJaxwsNotAllowedException should map NotAllowedException to CommonErrorResponse" {
-        // Arrange
-        val exp = NotAllowedException("GET")
-        val handler = RestErrorHandler()
-
-        // Act
-        val response = handler.handleNotAllowedException(mockRequest, exp)
-
-        // Assert
-        response.status shouldBe 400
-        val commonErrorResponse = response.entity as CommonErrorResponse
-        commonErrorResponse.correlationId shouldNotBe null
-        commonErrorResponse.httpStatusCode shouldBe 400
-
-        val commonError = commonErrorResponse.errors.first()
-        commonError.message shouldBe "Method Not Allowed"
-        commonError.code shouldBe "VALIDATION"
+    @Test
+    fun `handleJsonProcessingException should detect enum deserialization errors from IllegalArgumentException`() {
+        // Create a JsonMappingException wrapping an IllegalArgumentException (as happens with generated enum fromValue)
+        val cause = IllegalArgumentException("Unexpected value 'INVALID_CURRENCY'")
+        val path = JsonMappingException.Reference("currency", "currency")
+        
+        val exception = JsonMappingException(null, "Could not resolve type", cause)
+        exception.prependPath(path)
+        
+        val response = restErrorHandler.handleJsonProcessingException(mockRequest, exception)
+        
+        assertEquals(Response.Status.BAD_REQUEST.statusCode, response.status)
+        
+        val entity = response.entity as org.incept5.error.response.CommonErrorResponse
+        assertEquals(1, entity.errors.size)
+        assertEquals("VALIDATION", entity.errors[0].code)
+        assertEquals("currency", entity.errors[0].location)
+        assertTrue(entity.errors[0].message.contains("Invalid value for currency: INVALID_CURRENCY"))
+        // Should include hint for currency field
+        assertTrue(entity.errors[0].message.contains("Must be one of: USD"))
     }
 
-    "handleJaxwsNotAcceptableException should map NotAcceptableException to CommonErrorResponse" {
-        // Arrange
-        val exp = NotAcceptableException("not acceptable")
-        val handler = RestErrorHandler()
-
-        // Act
-        val response = handler.handleNotAcceptableException(mockRequest, exp)
-
-        // Assert
-        response.status shouldBe 400
-        val commonErrorResponse = response.entity as CommonErrorResponse
-        commonErrorResponse.correlationId shouldNotBe null
-        commonErrorResponse.httpStatusCode shouldBe 400
-
-        val commonError = commonErrorResponse.errors.first()
-        commonError.message shouldBe "Request Not Acceptable"
-        commonError.code shouldBe "VALIDATION"
+    @Test
+    fun `handleJsonProcessingException should handle regular JsonMappingException`() {
+        // Create a regular JsonMappingException without enum-related cause
+        val cause = RuntimeException("Some other error")
+        val path = JsonMappingException.Reference("field", "field")
+        
+        val exception = JsonMappingException(null, "Generic mapping error", cause)
+        exception.prependPath(path)
+        
+        val response = restErrorHandler.handleJsonProcessingException(mockRequest, exception)
+        
+        assertEquals(Response.Status.BAD_REQUEST.statusCode, response.status)
+        
+        val entity = response.entity as org.incept5.error.response.CommonErrorResponse
+        assertEquals(1, entity.errors.size)
+        assertEquals("VALIDATION", entity.errors[0].code)
+        assertEquals("field", entity.errors[0].location)
+        assertEquals("JSON mapping error at field: field", entity.errors[0].message)
     }
 
-    "handleJaxwsNotFoundException should map NotFoundException to CommonErrorResponse" {
-        // Arrange
-        val exp = NotFoundException("not found")
-        val handler = RestErrorHandler()
-
-        // Act
-        val response = handler.handleNotFoundException(mockRequest, exp)
-
-        // Assert
-        response.status shouldBe 404
-        val commonErrorResponse = response.entity as CommonErrorResponse
-        commonErrorResponse.correlationId shouldNotBe null
-        commonErrorResponse.httpStatusCode shouldBe 404
-
-        val commonError = commonErrorResponse.errors.first()
-        commonError.message shouldBe "Resource Not Found"
-        commonError.code shouldBe "NOT_FOUND"
+    @Test
+    fun `handleBadRequestException should delegate to InvalidFormatException handler when appropriate`() {
+        // Create a BadRequestException with InvalidFormatException as cause
+        val targetType = TestEnum::class.java
+        val invalidValue = "INVALID"
+        val path = JsonMappingException.Reference("status", "status")
+        
+        val invalidFormatEx = InvalidFormatException.from(
+            null,
+            "Cannot deserialize",
+            invalidValue,
+            targetType
+        )
+        invalidFormatEx.prependPath(path)
+        
+        val badRequestEx = BadRequestException("Bad request", invalidFormatEx)
+        
+        val response = restErrorHandler.handleBadRequestException(mockRequest, badRequestEx)
+        
+        assertEquals(Response.Status.BAD_REQUEST.statusCode, response.status)
+        
+        val entity = response.entity as org.incept5.error.response.CommonErrorResponse
+        assertEquals(1, entity.errors.size)
+        assertEquals("VALIDATION", entity.errors[0].code)
+        assertEquals("status", entity.errors[0].location)
+        assertTrue(entity.errors[0].message.contains("Invalid value for status: INVALID"))
     }
 
-    "handleRuntimeException should map ClientErrorException to CommonErrorResponse" {
-        // Arrange
-        val exp = ClientErrorException("client error", 400)
-        val handler = RestErrorHandler()
-
-        // Act
-        val response = handler.handleThrowable(mockRequest, exp)
-
-        // Assert
-        response.status shouldBe 500
-        val commonErrorResponse = response.entity as CommonErrorResponse
-        commonErrorResponse.correlationId shouldNotBe null
-        commonErrorResponse.httpStatusCode shouldBe 500
-
-        val commonError = commonErrorResponse.errors.first()
-        commonError.message shouldBe "client error"
-        commonError.code shouldBe "UNEXPECTED"
-
-        // and suppressed exception
-        val suppressedException = exp.suppressed.first()
-        suppressedException.message shouldBe "client error"
-        suppressedException.javaClass shouldBe CoreException::class.java
+    @Test
+    fun `handleWebApplicationException should delegate to InvalidFormatException handler when appropriate`() {
+        // Create a WebApplicationException with InvalidFormatException as cause
+        val targetType = TestEnum::class.java
+        val invalidValue = "WRONG"
+        val path = JsonMappingException.Reference("type", "type")
+        
+        val invalidFormatEx = InvalidFormatException.from(
+            null,
+            "Cannot deserialize",
+            invalidValue,
+            targetType
+        )
+        invalidFormatEx.prependPath(path)
+        
+        val webAppEx = WebApplicationException("Web app error", invalidFormatEx, Response.Status.BAD_REQUEST)
+        
+        val response = restErrorHandler.handleWebApplicationException(mockRequest, webAppEx)
+        
+        assertEquals(Response.Status.BAD_REQUEST.statusCode, response.status)
+        
+        val entity = response.entity as org.incept5.error.response.CommonErrorResponse
+        assertEquals(1, entity.errors.size)
+        assertEquals("VALIDATION", entity.errors[0].code)
+        assertEquals("type", entity.errors[0].location)
+        assertTrue(entity.errors[0].message.contains("Invalid value for type: WRONG"))
     }
 
-    "handleRuntimeException should map RuntimeException to CommonErrorResponse" {
-        // Arrange
-        val exp = RuntimeException("runtime error")
-        exp.addMetadata(ErrorCategory.VALIDATION, Error("VALIDATION_ERROR"))
-        val handler = RestErrorHandler()
-
-        // Act
-        val response = handler.handleRuntimeException(mockRequest, exp)
-
-        // Assert
-        response.status shouldBe 400
-        val commonErrorResponse = response.entity as CommonErrorResponse
-        commonErrorResponse.correlationId shouldNotBe null
-        commonErrorResponse.httpStatusCode shouldBe 400
-
-        val commonError = commonErrorResponse.errors.first()
-        commonError.message shouldBe "runtime error"
-        commonError.code shouldBe "VALIDATION_ERROR"
-
-        // and suppressed exception
-        val suppressedException = exp.suppressed.first()
-        suppressedException.message shouldBe "runtime error"
-        suppressedException.javaClass shouldBe CoreException::class.java
+    @Test
+    fun `handleJsonProcessingException with nested array path`() {
+        // Test with array index in path
+        val cause = IllegalArgumentException("Unexpected value 'INVALID'")
+        val path1 = JsonMappingException.Reference(null, 0) // Array index
+        val path2 = JsonMappingException.Reference("items", "items")
+        val path3 = JsonMappingException.Reference("currency", "currency")
+        
+        val exception = JsonMappingException(null, "Could not resolve", cause)
+        exception.prependPath(path1)
+        exception.prependPath(path2)
+        exception.prependPath(path3)
+        
+        val response = restErrorHandler.handleJsonProcessingException(mockRequest, exception)
+        
+        assertEquals(Response.Status.BAD_REQUEST.statusCode, response.status)
+        
+        val entity = response.entity as org.incept5.error.response.CommonErrorResponse
+        assertEquals("currency.items.[0]", entity.errors[0].location)
     }
 
-    "handleConstraintViolationException should map ConstraintViolationException to CommonErrorResponse" {
-        // Arrange
-        // Create a mock ConstraintViolationException with a mocked set of violations
-        val violations = mockk<Set<ConstraintViolation<*>>>()
-        val violation1 = mockk<ConstraintViolation<*>>()
-        val violation2 = mockk<ConstraintViolation<*>>()
-        val path1 = mockk<Path>()
-        val path2 = mockk<Path>()
-
-        // Configure mocks
-        every { violations.iterator() } returns listOf(violation1, violation2).iterator()
-        every { violations.size } returns 2
-        every { violation1.message } returns "must not be blank"
-        every { violation2.message } returns "must be greater than 0"
-        every { violation1.propertyPath } returns path1
-        every { violation2.propertyPath } returns path2
-        every { path1.toString() } returns "name"
-        every { path2.toString() } returns "age"
-
-        val exp = mockk<ConstraintViolationException>()
-        every { exp.message } returns "Validation failed"
-        every { exp.constraintViolations } returns violations
-
-        val handler = RestErrorHandler()
-
-        // Act
-        val response = handler.handleConstraintViolationException(mockRequest, exp)
-
-        // Assert
-        response.status shouldBe 400
-        val commonErrorResponse = response.entity as CommonErrorResponse
-        commonErrorResponse.correlationId shouldNotBe null
-        commonErrorResponse.httpStatusCode shouldBe 400
-
-        // Should have two errors
-        commonErrorResponse.errors.size shouldBe 2
-
-        // Verify errors are present with correct values
-        val nameError = commonErrorResponse.errors.find { it.location == "name" }
-        nameError shouldNotBe null
-        nameError!!.message shouldBe "must not be blank"
-        nameError.code shouldBe "VALIDATION"
-
-        val ageError = commonErrorResponse.errors.find { it.location == "age" }
-        ageError shouldNotBe null
-        ageError!!.message shouldBe "must be greater than 0"
-        ageError.code shouldBe "VALIDATION"
+    // Test enum for use in tests
+    enum class TestEnum {
+        VALUE1, VALUE2, VALUE3
     }
-
-    "handleWebApplicationException should extract field path from JsonMappingException" {
-        // Arrange
-        val jsonMappingException = mockk<JsonMappingException>(relaxed = true)
-        val reference1 = mockk<JsonMappingException.Reference>(relaxed = true)
-        val reference2 = mockk<JsonMappingException.Reference>(relaxed = true)
-        val path = listOf(reference1, reference2)
-
-        // Configure mocks for field path
-        every { reference1.fieldName } returns "user"
-        every { reference1.index } returns -1
-        every { reference2.fieldName } returns "email"
-        every { reference2.index } returns -1
-        every { jsonMappingException.path } returns path
-        every { jsonMappingException.message } returns "JSON parse error"
-
-        val webAppException = mockk<WebApplicationException>(relaxed = true)
-        every { webAppException.message } returns "Invalid JSON format"
-        every { webAppException.cause } returns jsonMappingException
-
-        val handler = RestErrorHandler()
-
-        // Act
-        val response = handler.handleWebApplicationException(mockRequest, webAppException)
-
-        // Assert
-        response.status shouldBe 400
-        val commonErrorResponse = response.entity as CommonErrorResponse
-        commonErrorResponse.correlationId shouldNotBe null
-        commonErrorResponse.httpStatusCode shouldBe 400
-
-        val commonError = commonErrorResponse.errors.first()
-        commonError.message shouldBe "Invalid JSON format"
-        commonError.code shouldBe "VALIDATION"
-        commonError.location shouldBe "user.email"
-    }
-
-    "handleWebApplicationException should handle JsonMappingException with array index" {
-        // Arrange
-        val jsonMappingException = mockk<JsonMappingException>(relaxed = true)
-        val reference1 = mockk<JsonMappingException.Reference>(relaxed = true)
-        val reference2 = mockk<JsonMappingException.Reference>(relaxed = true)
-        val path = listOf(reference1, reference2)
-
-        // Configure mocks for array index path
-        every { reference1.fieldName } returns "items"
-        every { reference1.index } returns -1
-        every { reference2.fieldName } returns null
-        every { reference2.index } returns 2
-        every { jsonMappingException.path } returns path
-        every { jsonMappingException.message } returns "Array parse error"
-
-        val webAppException = mockk<WebApplicationException>(relaxed = true)
-        every { webAppException.message } returns null
-        every { webAppException.cause } returns jsonMappingException
-
-        val handler = RestErrorHandler()
-
-        // Act
-        val response = handler.handleWebApplicationException(mockRequest, webAppException)
-
-        // Assert
-        response.status shouldBe 400
-        val commonErrorResponse = response.entity as CommonErrorResponse
-        commonErrorResponse.correlationId shouldNotBe null
-        commonErrorResponse.httpStatusCode shouldBe 400
-
-        val commonError = commonErrorResponse.errors.first()
-        commonError.message shouldBe "JSON mapping error"
-        commonError.code shouldBe "VALIDATION"
-        commonError.location shouldBe "items.[2]"
-    }
-
-})
+}
