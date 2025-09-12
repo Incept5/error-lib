@@ -90,6 +90,20 @@ open class RestErrorHandler {
         return handleCoreException(req, toCoreException(ErrorCategory.VALIDATION, exp, "Method Not Allowed"))
     }
 
+    /**
+     * Handle JWT authentication failures
+     * This mapper catches NotAuthorizedException that are thrown by Quarkus SmallRye JWT
+     * authentication when JWT validation fails (invalid/expired tokens, missing auth headers, etc.)
+     */
+    @ServerExceptionMapper
+    fun handleNotAuthorizedException(
+        req: HttpServerRequest,
+        exp: NotAuthorizedException,
+    ): Response {
+        Log.debug("Authentication failed: ${exp.message}")
+        return handleCoreException(req, toCoreException(ErrorCategory.AUTHENTICATION, exp, "Authentication required"))
+    }
+
     @ServerExceptionMapper
     @Priority(Priorities.USER - 100) // High priority to catch before other handlers
     fun handleBadRequestException(
