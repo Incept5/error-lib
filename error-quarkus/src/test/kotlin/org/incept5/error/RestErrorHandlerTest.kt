@@ -9,6 +9,7 @@ import io.vertx.core.http.HttpServerRequest
 import io.vertx.core.http.HttpMethod
 import io.vertx.core.net.SocketAddress
 import jakarta.ws.rs.BadRequestException
+import jakarta.ws.rs.NotAuthorizedException
 import jakarta.ws.rs.WebApplicationException
 import jakarta.ws.rs.core.Response
 import org.junit.jupiter.api.Assertions.*
@@ -206,6 +207,21 @@ class RestErrorHandlerTest {
         
         val entity = response.entity as org.incept5.error.response.CommonErrorResponse
         assertEquals("currency.items.[0]", entity.errors[0].location)
+    }
+
+    @Test
+    fun `handleNotAuthorizedException should return unauthorized error response`() {
+        // Create a NotAuthorizedException as would be thrown by Quarkus SmallRye JWT
+        val exception = NotAuthorizedException("JWT authentication failed")
+        
+        val response = restErrorHandler.handleNotAuthorizedException(mockRequest, exception)
+        
+        assertEquals(Response.Status.UNAUTHORIZED.statusCode, response.status)
+        
+        val entity = response.entity as org.incept5.error.response.CommonErrorResponse
+        assertEquals(1, entity.errors.size)
+        assertEquals("AUTHENTICATION", entity.errors[0].code)
+        assertEquals("Authentication required", entity.errors[0].message)
     }
 
     // Test enum for use in tests
