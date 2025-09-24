@@ -9,5 +9,6 @@ enum class ErrorCategory {
     VALIDATION,
     CONFLICT,
     NOT_FOUND,
+    UNPROCESSABLE,
     UNEXPECTED,
 }

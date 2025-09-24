@@ -406,6 +406,7 @@ open class RestErrorHandler {
             ErrorCategory.VALIDATION -> Response.Status.BAD_REQUEST
             ErrorCategory.CONFLICT -> Response.Status.CONFLICT
             ErrorCategory.NOT_FOUND -> Response.Status.NOT_FOUND
+            ErrorCategory.UNPROCESSABLE -> Response.Status.fromStatusCode(422)!!
             ErrorCategory.UNEXPECTED -> Response.Status.INTERNAL_SERVER_ERROR
         }
     }
