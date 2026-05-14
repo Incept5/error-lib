@@ -409,5 +409,30 @@ class MessageResourceTest {
         assertNull(response["location"])
     }
 
+    @Test
+    fun `post message - empty request body returns 400 not 500`() {
+        // Regression for the CustomReaderInterceptor NPE: an empty body makes
+        // ReaderInterceptorContext.proceed() return null. The interceptor previously
+        // declared a non-null `Any` return type, so Kotlin's synthetic non-null check
+        // threw NPE *outside* the try/catch — surfacing as a raw 500 instead of a 400.
+        val response =
+            given()
+                .body("")
+                .contentType("application/json")
+                .`when`()
+                .post("/messages")
+                .then()
+                .statusCode(Response.Status.BAD_REQUEST.statusCode)
+                .extract()
+                .path<HashMap<String, Any>>("$")
 
+        assertNotNull(response["errors"])
+        assertNotNull(response["correlationId"])
+        assertEquals(400, response["httpStatusCode"])
+
+        val errors = response["errors"] as List<*>
+        assertEquals(1, errors.size)
+        val error = errors[0] as Map<*, *>
+        assertEquals("VALIDATION", error["code"])
+    }
 }
