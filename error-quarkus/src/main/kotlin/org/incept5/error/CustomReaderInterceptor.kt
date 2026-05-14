@@ -29,10 +29,16 @@ class CustomReaderInterceptor : ReaderInterceptor {
      * throw `NullPointerException` on an empty body, and because that NPE was thrown on the
      * `return` (outside the `try`/`catch`) it escaped the 400 mapping and surfaced as a raw 500.
      *
-     * A `null` result is then mapped to a 400: this interceptor only runs when the resource
-     * method declares a body parameter, so an absent/empty body is a client error. Without this,
-     * the `null` flows on and either NPEs against a non-null Kotlin parameter (500 again) or is
-     * silently injected as `null`.
+     * A `null` result is then mapped to a 400 ("Request body is required").
+     *
+     * **Limitation — nullable body parameters:** this interceptor is a global `@Provider`, so the
+     * 400 applies to *every* JSON endpoint, and it cannot distinguish a Kotlin-nullable body
+     * parameter (`body: T?`) from a required one — parameter nullability is not visible at the
+     * JAX-RS `MessageBodyReader` layer. An endpoint that genuinely wants to accept an absent body
+     * therefore cannot rely on a nullable JSON body parameter alone; it must opt out of this
+     * interceptor or model the optional body another way. This is not a regression: before this
+     * fix the same scenario produced a raw 500 via the non-null `Any` return, so no caller was
+     * ever successfully accepting an empty body through this interceptor.
      */
     override fun aroundReadFrom(context: ReaderInterceptorContext): Any? {
         val body = try {
@@ -81,9 +87,13 @@ class CustomReaderInterceptor : ReaderInterceptor {
 
         // An empty request body deserialises to null (no exception thrown). Map it to 400 here
         // rather than letting it reach the resource method — see the KDoc above.
-        return body ?: throw WebApplicationException(
-            "Request body is required",
-            Response.Status.BAD_REQUEST,
-        )
+        if (body == null) {
+            Log.debug("Empty request body — returning 400")
+            throw WebApplicationException(
+                "Request body is required",
+                Response.Status.BAD_REQUEST,
+            )
+        }
+        return body
     }
 }

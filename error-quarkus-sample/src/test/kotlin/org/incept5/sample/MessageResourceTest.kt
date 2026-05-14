@@ -434,5 +434,7 @@ class MessageResourceTest {
         assertEquals(1, errors.size)
         val error = errors[0] as Map<*, *>
         assertEquals("VALIDATION", error["code"])
+        // Pin the user-facing message text — the empty-body 400 contract.
+        assertEquals("Request body is required", error["message"])
     }
 }
