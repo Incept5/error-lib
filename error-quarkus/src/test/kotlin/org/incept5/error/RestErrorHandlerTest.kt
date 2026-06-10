@@ -224,6 +224,26 @@ class RestErrorHandlerTest {
         assertEquals("Authentication required", entity.errors[0].message)
     }
 
+    @Test
+    fun `handleCoreException should map BAD_GATEWAY category to 502 response`() {
+        val exception = CoreException(
+            ErrorCategory.BAD_GATEWAY,
+            listOf(Error("BAD_GATEWAY")),
+            "Upstream service unavailable",
+            RuntimeException("connection refused")
+        )
+
+        val response = restErrorHandler.handleCoreException(mockRequest, exception)
+
+        assertEquals(Response.Status.BAD_GATEWAY.statusCode, response.status)
+
+        val entity = response.entity as org.incept5.error.response.CommonErrorResponse
+        assertEquals(Response.Status.BAD_GATEWAY.statusCode, entity.httpStatusCode)
+        assertEquals(1, entity.errors.size)
+        assertEquals("BAD_GATEWAY", entity.errors[0].code)
+        assertEquals("Upstream service unavailable", entity.errors[0].message)
+    }
+
     // Test enum for use in tests
     enum class TestEnum {
         VALUE1, VALUE2, VALUE3
