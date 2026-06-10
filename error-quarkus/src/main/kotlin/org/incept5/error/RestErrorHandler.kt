@@ -44,6 +44,10 @@ open class RestErrorHandler {
             if ( exp.category == ErrorCategory.UNEXPECTED ) {
                 // unexpected exceptions are logged to ERROR and the full stacktrace appears in the logs
                 Log.error("Unexpected exception encountered : ${requestLog(req)}", exp)
+            } else if ( exp.category == ErrorCategory.BAD_GATEWAY ) {
+                // upstream/gateway failures are 5xx server-side errors: log to ERROR with the full
+                // stacktrace so the failing upstream dependency can be diagnosed
+                Log.error("Bad gateway exception encountered : ${requestLog(req)}", exp)
             } else {
                 // all other exceptions are logged to WARN and the message and first 10 lines of the root cause appear in the logs
                 Log.warn("Application exception encountered : ${requestLog(req, exp)}")
@@ -406,6 +410,7 @@ open class RestErrorHandler {
             ErrorCategory.VALIDATION -> Response.Status.BAD_REQUEST
             ErrorCategory.CONFLICT -> Response.Status.CONFLICT
             ErrorCategory.NOT_FOUND -> Response.Status.NOT_FOUND
+            ErrorCategory.BAD_GATEWAY -> Response.Status.BAD_GATEWAY
             ErrorCategory.UNEXPECTED -> Response.Status.INTERNAL_SERVER_ERROR
         }
     }
