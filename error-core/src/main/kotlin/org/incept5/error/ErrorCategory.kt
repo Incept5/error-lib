@@ -10,5 +10,6 @@ enum class ErrorCategory {
     CONFLICT,
     NOT_FOUND,
     BAD_GATEWAY,
+    RATE_LIMIT_EXCEEDED,
     UNEXPECTED,
 }

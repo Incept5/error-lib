@@ -83,12 +83,14 @@ The library defines several error categories that map to appropriate HTTP status
 
 ```kotlin
 enum class ErrorCategory {
-    AUTHENTICATION,    // 401 Unauthorized
-    AUTHORIZATION,     // 403 Forbidden
-    VALIDATION,        // 400 Bad Request
-    CONFLICT,          // 409 Conflict
-    NOT_FOUND,         // 404 Not Found
-    UNEXPECTED,        // 500 Internal Server Error
+    AUTHENTICATION,      // 401 Unauthorized
+    AUTHORIZATION,       // 403 Forbidden
+    VALIDATION,          // 400 Bad Request
+    CONFLICT,            // 409 Conflict
+    NOT_FOUND,           // 404 Not Found
+    BAD_GATEWAY,         // 502 Bad Gateway
+    RATE_LIMIT_EXCEEDED, // 429 Too Many Requests (with Retry-After header)
+    UNEXPECTED,          // 500 Internal Server Error
 }
 ```
 
@@ -152,6 +154,29 @@ if (exception.isRetryable()) {
     // Implement retry logic
 }
 ```
+
+### Rate Limit Errors
+
+When a caller exceeds a rate limit, throw `RateLimitExceededException` (or any `CoreException`
+with the `RATE_LIMIT_EXCEEDED` category) from your throttling site:
+
+```kotlin
+throw RateLimitExceededException(
+    message = "Rate limit exceeded. Maximum 10 requests per minute allowed.",
+    retryAfterSeconds = 30, // optional, defaults to 60 in the response header
+)
+```
+
+In Quarkus the handler maps this to an HTTP 429 (Too Many Requests) response with a
+`Retry-After` header set from `retryAfterSeconds` (or `60` if not supplied). The exception
+is always retryable.
+
+Note that the library logs rate limit errors at DEBUG rather than WARN, on the assumption
+that the throttling site (e.g. an interceptor) already logs each rejection with its own
+context (bucket key, limit, client) — this avoids double-logging every throttled request.
+
+This library only standardises the 429 *response*; it does not provide a rate limiting
+mechanism. For annotation-driven endpoint throttling see `@RateLimit` in `platform-core-lib`.
 
 ## Quarkus Integration
 

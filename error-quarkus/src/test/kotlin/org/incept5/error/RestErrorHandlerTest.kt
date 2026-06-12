@@ -244,6 +244,42 @@ class RestErrorHandlerTest {
         assertEquals("Upstream service unavailable", entity.errors[0].message)
     }
 
+    @Test
+    fun `handleCoreException should map RATE_LIMIT_EXCEEDED category to 429 response with default Retry-After`() {
+        val exception = CoreException(
+            ErrorCategory.RATE_LIMIT_EXCEEDED,
+            listOf(Error("RATE_LIMIT_EXCEEDED")),
+            "Too many requests"
+        )
+
+        val response = restErrorHandler.handleCoreException(mockRequest, exception)
+
+        assertEquals(Response.Status.TOO_MANY_REQUESTS.statusCode, response.status)
+        assertEquals("60", response.getHeaderString("Retry-After"))
+
+        val entity = response.entity as org.incept5.error.response.CommonErrorResponse
+        assertEquals(Response.Status.TOO_MANY_REQUESTS.statusCode, entity.httpStatusCode)
+        assertEquals(1, entity.errors.size)
+        assertEquals("RATE_LIMIT_EXCEEDED", entity.errors[0].code)
+        assertEquals("Too many requests", entity.errors[0].message)
+    }
+
+    @Test
+    fun `handleCoreException should use retryAfterSeconds from RateLimitExceededException`() {
+        val exception = RateLimitExceededException("Rate limit exceeded for bucket api-key-123", retryAfterSeconds = 30)
+
+        val response = restErrorHandler.handleCoreException(mockRequest, exception)
+
+        assertEquals(Response.Status.TOO_MANY_REQUESTS.statusCode, response.status)
+        assertEquals("30", response.getHeaderString("Retry-After"))
+        assertTrue(exception.isRetryable())
+
+        val entity = response.entity as org.incept5.error.response.CommonErrorResponse
+        assertEquals(1, entity.errors.size)
+        assertEquals("RATE_LIMIT_EXCEEDED", entity.errors[0].code)
+        assertEquals("Rate limit exceeded for bucket api-key-123", entity.errors[0].message)
+    }
+
     // Test enum for use in tests
     enum class TestEnum {
         VALUE1, VALUE2, VALUE3
