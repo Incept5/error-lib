@@ -29,6 +29,7 @@ open class RestErrorHandler {
 
     companion object {
         private val objectMapper = ObjectMapper()
+        private const val DEFAULT_RETRY_AFTER_SECONDS = 60L
     }
 
     /**
@@ -48,6 +49,10 @@ open class RestErrorHandler {
                 // upstream/gateway failures are 5xx server-side errors: log to ERROR with the full
                 // stacktrace so the failing upstream dependency can be diagnosed
                 Log.error("Bad gateway exception encountered : ${requestLog(req)}", exp)
+            } else if ( exp.category == ErrorCategory.RATE_LIMIT_EXCEEDED ) {
+                // the throttling site (interceptor or controller) typically WARN-logs with its own context;
+                // debug here avoids double-logging every throttled request
+                Log.debug("Rate limit exceeded : ${requestLog(req, exp)}")
             } else {
                 // all other exceptions are logged to WARN and the message and first 10 lines of the root cause appear in the logs
                 Log.warn("Application exception encountered : ${requestLog(req, exp)}")
@@ -58,9 +63,14 @@ open class RestErrorHandler {
                     CorrelationId.getId(),
                     mapErrorCategoryToHttpStatus(exp.category).statusCode,
                 )
-            Response
+            val builder = Response
                 .status(mapErrorCategoryToHttpStatus(exp.category))
-                .entity(response).build()
+                .entity(response)
+            if (exp.category == ErrorCategory.RATE_LIMIT_EXCEEDED) {
+                val retryAfterSeconds = (exp as? RateLimitExceededException)?.retryAfterSeconds ?: DEFAULT_RETRY_AFTER_SECONDS
+                builder.header("Retry-After", retryAfterSeconds.toString())
+            }
+            builder.build()
         } catch (t: Throwable) {
             Log.error("Failed to generate error response", exp)
             handleUnexpectedException(req, t)
@@ -411,6 +421,7 @@ open class RestErrorHandler {
             ErrorCategory.CONFLICT -> Response.Status.CONFLICT
             ErrorCategory.NOT_FOUND -> Response.Status.NOT_FOUND
             ErrorCategory.BAD_GATEWAY -> Response.Status.BAD_GATEWAY
+            ErrorCategory.RATE_LIMIT_EXCEEDED -> Response.Status.TOO_MANY_REQUESTS
             ErrorCategory.UNEXPECTED -> Response.Status.INTERNAL_SERVER_ERROR
         }
     }
